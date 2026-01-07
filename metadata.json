@@ -1,4 +1,5 @@
 {
   "name": "English Master AI",
-  "description": "Una aplicación web progresiva para aprender inglés con generación de ejercicios y teoría mediante IA. Incluye modos de práctica y examen."
+  "description": "Una aplicación web progresiva para aprender inglés con generación de ejercicios y teoría mediante IA. Incluye modos de práctica y examen.",
+  "requestFramePermissions": []
 }

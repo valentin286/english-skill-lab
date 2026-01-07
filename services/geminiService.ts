@@ -1,14 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-
-// Initialize only if key exists to avoid immediate crash, handle error gracefully in calls
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateTheory = async (topicTitle: string): Promise<string> => {
-  if (!ai) throw new Error("API Key missing");
-
   const model = "gemini-3-flash-preview";
   const prompt = `
     Act as an expert English teacher. 
@@ -36,8 +31,6 @@ export const generateTheory = async (topicTitle: string): Promise<string> => {
 };
 
 export const generateQuestions = async (topicTitle: string, count: number = 5, difficulty: 'easy' | 'medium' | 'hard' = 'medium'): Promise<Question[]> => {
-  if (!ai) throw new Error("API Key missing");
-
   const model = "gemini-3-flash-preview";
   const prompt = `
     Generate ${count} multiple-choice questions about "${topicTitle}" for an English student.

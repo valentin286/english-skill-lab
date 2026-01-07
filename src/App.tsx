@@ -61,11 +61,10 @@ import {
   Image as ImageIcon,
   Trophy,
   Medal,
-  Crown,
-  Sparkles
+  Crown
 } from 'lucide-react';
 
-// Initialize AI for Image Generation
+// Initialize AI for Image Generation (Only used if needed, but comic generation is removed)
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // --- GAMIFICATION HELPERS ---
@@ -138,6 +137,16 @@ const normalizeAnswer = (text: string) => {
     .replace(/\s+/g, ' '); 
 };
 
+// Helper: Format Seconds to nice string
+const formatDuration = (seconds: number) => {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours > 0) return `${hours}h ${remainingMinutes}m`;
+  return `${minutes}m`;
+};
+
 // --- ADVANCED MARKDOWN RENDERER ---
 const renderInlineText = (text: string) => {
   const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
@@ -152,7 +161,7 @@ const renderInlineText = (text: string) => {
   });
 };
 
-const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, isGenerating: boolean, imageUrl: string | null }) => {
+const renderMarkdown = (text: string) => {
   if (!text) return null;
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
@@ -176,28 +185,6 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
     const trimmed = line.trim();
     if (trimmed === '') return;
 
-    if (line.includes('<!-- COMIC_PLACEHOLDER -->') && comicConfig) {
-      flushCard();
-      elements.push(
-        <div key={`comic-${i}`} className="my-8 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center transition-all">
-          {comicConfig.imageUrl ? (
-             <div className="rounded-lg overflow-hidden shadow-xl animate-in fade-in zoom-in">
-                <img src={comicConfig.imageUrl} alt="AI Generated Comic" className="w-full h-auto" />
-             </div>
-          ) : (
-             <div className="flex flex-col items-center">
-                <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
-                <p className="text-slate-500 mb-4">Visualiza el concepto con una viñeta generada por IA</p>
-                <Button onClick={comicConfig.onGenerate} disabled={comicConfig.isGenerating} className="flex gap-2">
-                  {comicConfig.isGenerating ? <LoadingSpinner message="Creando..." /> : <><Sparkles className="w-4 h-4"/> Generar Comic IA</>}
-                </Button>
-             </div>
-          )}
-        </div>
-      );
-      return;
-    }
-
     if (line.startsWith('# ')) {
       flushCard();
       elements.push(<h1 key={i} className="text-4xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">{line.replace('# ', '')}</h1>);
@@ -210,6 +197,7 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
       currentCardBuffer.push(<h4 key={i} className="text-lg font-bold mt-4 text-slate-700 dark:text-slate-200">{line.replace('### ', '')}</h4>);
     }
     else if (line.startsWith('![')) {
+      // Image Handling: ![AltText](URL)
       const match = line.match(/!\[(.*?)\]\((.*?)\)/);
       if (match) {
         currentCardBuffer.push(
@@ -247,7 +235,7 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
   return <div className="space-y-2">{elements}</div>;
 };
 
-// ... (LoginView and ContentEditor remain the same)
+// Extracted LoginView... (same as before)
 const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin }) => {
   const [input, setInput] = useState('');
 
@@ -284,11 +272,13 @@ const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin 
   );
 };
 
+// Extracted Content Editor Component
 const ContentEditor: React.FC<{ 
   topic: Topic; 
   onSave: (updatedTopic: Topic) => void; 
   onCancel: () => void 
 }> = ({ topic, onSave, onCancel }) => {
+  // ... (Same editor logic)
   const [activeTab, setActiveTab] = useState<'theory' | 'questions'>('theory');
   const [theory, setTheory] = useState(topic.manualTheory || '');
   const [questions, setQuestions] = useState<Question[]>(topic.manualQuestions || []);
@@ -434,10 +424,6 @@ const App: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Comic State
-  const [comicUrl, setComicUrl] = useState<string | null>(null);
-  const [isGeneratingComic, setIsGeneratingComic] = useState(false);
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [showFeedback, setShowFeedback] = useState(false);
@@ -528,44 +514,6 @@ const App: React.FC = () => {
     setExamResult(null);
     setIsTheoryPanelOpen(false);
     setCurrentExerciseSet(null);
-    setComicUrl(null);
-    setIsGeneratingComic(false);
-  };
-
-  const generateComic = async () => {
-    if (!selectedTopic) return;
-    setIsGeneratingComic(true);
-    try {
-      let prompt = "Create a 2-panel educational comic strip pixel art style. ";
-      
-      if (selectedTopic.id === 'past-simple-cont') {
-         // Corrected prompt to match the detective theory in constants.ts
-         prompt += "Left panel: A detective in a trench coat investigating a crime scene with a magnifying glass (Past Continuous 'was investigating'). Right panel: The same detective suddenly finding a glowing golden key on the floor, surprised (Past Simple 'found'). 16-bit pixel art.";
-      } else if (selectedTopic.id === 'pres-simple-cont') {
-         prompt += "Left panel: A detective standing calmly in an office smoking a pipe, caption 'I solve crimes'. Right panel: The same detective running fast chasing a shadowy thief in a city street, sweating, caption 'I am chasing a suspect'. 16-bit pixel art.";
-      } else {
-         prompt += "A funny situation showing the difference between two grammar tenses. 16-bit pixel art.";
-      }
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [{ text: prompt }] },
-      });
-      
-      let imgUrl = null;
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imgUrl = `data:image/png;base64,${part.inlineData.data}`;
-          break;
-        }
-      }
-      if (imgUrl) setComicUrl(imgUrl);
-    } catch (error) {
-       console.error(error);
-       alert("Error generating image. Check API Key.");
-    } finally {
-       setIsGeneratingComic(false);
-    }
   };
 
   // ... (Admin logic kept same)
@@ -609,7 +557,6 @@ const App: React.FC = () => {
     setCurrentView('study');
     startSessionTracking();
     prepareContent(topic);
-    setComicUrl(null);
   };
 
   const preparePractice = (topic: Topic) => {
@@ -648,6 +595,7 @@ const App: React.FC = () => {
       alert("No hay examen disponible para este tema.");
       return;
     }
+    // Exam unlocking logic removed per user request. Exams are open for everyone.
     setSelectedTopic(topic);
     resetSession();
     setCurrentView('exam');
@@ -700,14 +648,7 @@ const App: React.FC = () => {
       const isCorrect = cleanUser === cleanCorrect;
       if (isCorrect) score++;
       else mistakes.push({ questionText: q.text, userAnswer: selected, correctAnswer: q.correctAnswer });
-      return { 
-        questionId: q.id, 
-        questionText: q.text, 
-        selected, 
-        correct: q.correctAnswer, 
-        isCorrect, 
-        explanation: q.explanation 
-      };
+      return { questionId: q.id, selected, correct: q.correctAnswer, isCorrect };
     });
 
     let xpEarned = 0;
@@ -730,27 +671,17 @@ const App: React.FC = () => {
         timestamp: Date.now(),
         mistakes,
         type: currentView === 'exam' ? 'exam' : 'practice',
-        exerciseIndex: currentView === 'practice' ? currentExerciseSet! : undefined,
-        xpEarned: xpEarned
+        exerciseIndex: currentView === 'practice' ? currentExerciseSet! : undefined
       };
       setProgressHistory(prev => [...prev, newProgress]);
     }
 
-    setExamResult({ 
-      score, 
-      total: questions.length, 
-      answers: results, 
-      topicTitle: selectedTopic?.title, 
-      xpEarned,
-      timestamp: Date.now(),
-      type: currentView === 'exam' ? 'exam' : 'practice'
-    });
+    setExamResult({ score, total: questions.length, answers: results, topicTitle: selectedTopic?.title, xpEarned });
     setCurrentView('results');
   };
 
   // --- RENDERERS ---
 
-  // ... (Header, Sidebar, Dashboard, AdminDashboard, StudentProgress kept same)
   const renderHeader = () => {
     if (currentView === 'login') return null;
     const currentXP = currentUser?.xp || 0;
@@ -1151,11 +1082,7 @@ const App: React.FC = () => {
       </div>
 
       <div className="space-y-8 animate-fade-in">
-        {renderMarkdown(theoryContent, { 
-          onGenerate: generateComic, 
-          isGenerating: isGeneratingComic, 
-          imageUrl: comicUrl 
-        })}
+        {renderMarkdown(theoryContent)}
       </div>
 
       <div className="fixed bottom-0 left-0 w-full p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 flex justify-center z-10">
