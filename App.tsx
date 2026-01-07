@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CATEGORIES as INITIAL_CATEGORIES } from './constants';
-import { Category, Topic, AppView, Question, ExamResult, User, Role, StudySession, UserProgress } from './types';
+import { CATEGORIES as INITIAL_CATEGORIES, LEAGUES, INITIAL_MISSIONS } from './constants';
+import { Category, Topic, AppView, Question, ExamResult, User, Role, StudySession, UserProgress, LeagueTier, Mission } from './types';
 import { GoogleGenAI } from "@google/genai";
 import { Button } from './components/Button';
 import { LoadingSpinner } from './components/LoadingSpinner';
@@ -9,60 +9,65 @@ import {
   Brain, 
   CheckCircle, 
   ChevronLeft, 
-  ChevronRight,
+  ChevronRight, 
   GraduationCap, 
   Home, 
   Layout, 
-  Menu,
-  XCircle,
-  Clock,
-  Briefcase,
-  Plane,
-  Puzzle,
-  Utensils,
-  Newspaper,
-  History,
-  GitBranch,
-  Repeat,
-  FileText,
-  Mail,
-  Link,
-  LogOut,
-  Users,
-  Settings,
-  Plus,
-  Trash2,
-  FolderPlus,
-  Edit3,
-  Save,
-  FileEdit,
-  Eye,
-  Code,
-  Info,
-  Moon,
-  Sun,
-  X,
-  ArrowUp,
-  ArrowDown,
-  BarChart,
-  Calendar,
-  AlertCircle,
-  Lightbulb,
-  Bookmark,
-  Check,
-  Award,
-  MoreVertical,
-  Layers,
-  FileQuestion,
-  Search,
-  Lock,
-  Star,
-  Zap,
-  Image as ImageIcon,
-  Trophy,
-  Medal,
-  Crown,
-  Sparkles
+  Menu, 
+  XCircle, 
+  Clock, 
+  Briefcase, 
+  Plane, 
+  Puzzle, 
+  Utensils, 
+  Newspaper, 
+  History, 
+  GitBranch, 
+  Repeat, 
+  FileText, 
+  Mail, 
+  Link, 
+  LogOut, 
+  Users, 
+  Settings, 
+  Plus, 
+  Trash2, 
+  FolderPlus, 
+  Edit3, 
+  Save, 
+  FileEdit, 
+  Eye, 
+  Code, 
+  Info, 
+  Moon, 
+  Sun, 
+  X, 
+  ArrowUp, 
+  ArrowDown, 
+  BarChart, 
+  Calendar, 
+  AlertCircle, 
+  Lightbulb, 
+  Bookmark, 
+  Check, 
+  Award, 
+  MoreVertical, 
+  Layers, 
+  FileQuestion, 
+  Search, 
+  Lock, 
+  Star, 
+  Zap, 
+  Image as ImageIcon, 
+  Trophy, 
+  Medal, 
+  Crown, 
+  Sparkles, 
+  Shield, 
+  Target, 
+  Flame, 
+  FlaskConical, 
+  MessageCircle
 } from 'lucide-react';
 
 // Initialize AI for Image Generation
@@ -110,13 +115,21 @@ const getIcon = (iconName: string) => {
     FileText: <FileText className="w-5 h-5" />,
     Mail: <Mail className="w-5 h-5" />,
     Link: <Link className="w-5 h-5" />,
+    Shield: <Shield className="w-5 h-5" />,
+    Crown: <Crown className="w-5 h-5" />,
+    Zap: <Zap className="w-5 h-5" />,
+    Target: <Target className="w-5 h-5" />,
+    Calendar: <Calendar className="w-5 h-5" />,
   };
   return icons[iconName] || <BookOpen className="w-5 h-5" />;
 };
 
 const INITIAL_USERS: User[] = [
-  { id: '1', name: 'Profesor Admin', username: 'admin', role: 'admin', xp: 500 },
-  { id: '2', name: 'Estudiante Demo', username: 'student', role: 'student', xp: 120 },
+  { id: '1', name: 'Profesor Admin', username: 'admin', role: 'admin', xp: 500, league: 'Gold', impactScore: 100, streakDays: 10, lastActivityDate: '2023-10-27' },
+  { id: '2', name: 'Estudiante Demo', username: 'student', role: 'student', xp: 120, league: 'Bronze', impactScore: 10, streakDays: 2, lastActivityDate: '2023-10-27' },
+  { id: '3', name: 'Alex Johnson', username: 'alexj', role: 'student', xp: 2150, league: 'Gold', impactScore: 45, streakDays: 15, lastActivityDate: '2023-10-27' },
+  { id: '4', name: 'Sarah Lee', username: 'sarah', role: 'student', xp: 800, league: 'Silver', impactScore: 20, streakDays: 5, lastActivityDate: '2023-10-26' },
+  { id: '5', name: 'Mike Brown', username: 'mike', role: 'student', xp: 3500, league: 'Platinum', impactScore: 120, streakDays: 30, lastActivityDate: '2023-10-27' },
 ];
 
 // Helper: Normalize Text for flexible matching
@@ -176,25 +189,27 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
     const trimmed = line.trim();
     if (trimmed === '') return;
 
-    if (line.includes('<!-- COMIC_PLACEHOLDER -->') && comicConfig) {
-      flushCard();
-      elements.push(
-        <div key={`comic-${i}`} className="my-8 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center transition-all">
-          {comicConfig.imageUrl ? (
-             <div className="rounded-lg overflow-hidden shadow-xl animate-in fade-in zoom-in">
-                <img src={comicConfig.imageUrl} alt="AI Generated Comic" className="w-full h-auto" />
-             </div>
-          ) : (
-             <div className="flex flex-col items-center">
-                <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
-                <p className="text-slate-500 mb-4">Visualiza el concepto con una viñeta generada por IA</p>
-                <Button onClick={comicConfig.onGenerate} disabled={comicConfig.isGenerating} className="flex gap-2">
-                  {comicConfig.isGenerating ? <LoadingSpinner message="Creando..." /> : <><Sparkles className="w-4 h-4"/> Generar Comic IA</>}
-                </Button>
-             </div>
-          )}
-        </div>
-      );
+    if (line.includes('<!-- COMIC_PLACEHOLDER -->')) {
+      if (comicConfig) {
+        flushCard();
+        elements.push(
+          <div key={`comic-${i}`} className="my-8 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center transition-all">
+            {comicConfig.imageUrl ? (
+               <div className="rounded-lg overflow-hidden shadow-xl animate-in fade-in zoom-in">
+                  <img src={comicConfig.imageUrl} alt="AI Generated Comic" className="w-full h-auto" />
+               </div>
+            ) : (
+               <div className="flex flex-col items-center">
+                  <ImageIcon className="w-12 h-12 text-slate-400 mb-3" />
+                  <p className="text-slate-500 mb-4">Visualiza el concepto con una viñeta generada por IA</p>
+                  <Button onClick={comicConfig.onGenerate} disabled={comicConfig.isGenerating} className="flex gap-2">
+                    {comicConfig.isGenerating ? <LoadingSpinner message="Creando..." /> : <><Sparkles className="w-4 h-4"/> Generar Comic IA</>}
+                  </Button>
+               </div>
+            )}
+          </div>
+        );
+      }
       return;
     }
 
@@ -247,7 +262,6 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
   return <div className="space-y-2">{elements}</div>;
 };
 
-// ... (LoginView and ContentEditor remain the same)
 const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin }) => {
   const [input, setInput] = useState('');
 
@@ -255,8 +269,11 @@ const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin 
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4 transition-colors">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg max-w-md w-full border border-slate-200 dark:border-slate-700">
         <div className="flex justify-center mb-6">
-          <div className="bg-blue-600 p-3 rounded-xl">
-            <GraduationCap className="text-white w-10 h-10" />
+          <div className="relative bg-gradient-to-br from-blue-600 to-violet-600 p-4 rounded-2xl shadow-xl shadow-blue-500/30">
+            <FlaskConical className="text-white w-12 h-12" />
+            <div className="absolute -top-3 -right-3 bg-white dark:bg-slate-800 rounded-full p-1.5 border-4 border-slate-100 dark:border-slate-900 shadow-sm">
+                <MessageCircle className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+            </div>
           </div>
         </div>
         <h1 className="text-2xl font-bold text-center text-slate-800 dark:text-white mb-2">Valen's English Lab</h1>
@@ -389,7 +406,7 @@ const ContentEditor: React.FC<{
   );
 };
 
-const App: React.FC = () => {
+export default function App() {
   // ... STATE ...
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(() => {
@@ -414,6 +431,11 @@ const App: React.FC = () => {
   const [completedExercises, setCompletedExercises] = useState<Record<string, Record<string, number[]>>>(() => {
     const saved = localStorage.getItem('app_completed_exercises');
     return saved ? JSON.parse(saved) : {};
+  });
+
+  const [missions, setMissions] = useState<Mission[]>(() => {
+    const saved = localStorage.getItem('app_missions');
+    return saved ? JSON.parse(saved) : INITIAL_MISSIONS;
   });
 
   const sessionStartTimeRef = useRef<number | null>(null);
@@ -468,6 +490,7 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('app_progress', JSON.stringify(progressHistory)); }, [progressHistory]);
   useEffect(() => { localStorage.setItem('app_sessions', JSON.stringify(studySessions)); }, [studySessions]);
   useEffect(() => { localStorage.setItem('app_completed_exercises', JSON.stringify(completedExercises)); }, [completedExercises]);
+  useEffect(() => { localStorage.setItem('app_missions', JSON.stringify(missions)); }, [missions]);
 
   const startSessionTracking = () => { sessionStartTimeRef.current = Date.now(); };
 
@@ -539,10 +562,13 @@ const App: React.FC = () => {
       let prompt = "Create a 2-panel educational comic strip pixel art style. ";
       
       if (selectedTopic.id === 'past-simple-cont') {
-         // Corrected prompt to match the detective theory in constants.ts
          prompt += "Left panel: A detective in a trench coat investigating a crime scene with a magnifying glass (Past Continuous 'was investigating'). Right panel: The same detective suddenly finding a glowing golden key on the floor, surprised (Past Simple 'found'). 16-bit pixel art.";
       } else if (selectedTopic.id === 'pres-simple-cont') {
          prompt += "Left panel: A detective standing calmly in an office smoking a pipe, caption 'I solve crimes'. Right panel: The same detective running fast chasing a shadowy thief in a city street, sweating, caption 'I am chasing a suspect'. 16-bit pixel art.";
+      } else if (selectedTopic.id === 'past-perfect-simple') {
+         prompt += "Left panel: A train leaving the station, seen from the back, clock showing 9:00 (Past Perfect 'had left'). Right panel: Two people arriving at the empty platform, clock showing 9:05 (Past Simple 'arrived'). 16-bit pixel art.";
+      } else if (selectedTopic.id === 'perf-continuous') {
+         prompt += "Left panel: A runner jogging in a park, sun shining, sweating heavily, caption 'I have been running' (Present Perfect Continuous). Right panel: The same runner sitting on a bench at night, remembering the run, still looking tired, caption 'I had been running' (Past Perfect Continuous). 16-bit pixel art.";
       } else {
          prompt += "A funny situation showing the difference between two grammar tenses. 16-bit pixel art.";
       }
@@ -578,7 +604,7 @@ const App: React.FC = () => {
     }));
     setTopicToEdit(null); setCurrentView('admin-dashboard');
   };
-  const addUser = () => { if (!newUserName.trim()) return; setUsers([...users, { id: Date.now().toString(), name: newUserName, username: newUserName.toLowerCase().replace(/\s/g, ''), role: newUserRole, xp: 0 }]); setNewUserName(''); };
+  const addUser = () => { if (!newUserName.trim()) return; setUsers([...users, { id: Date.now().toString(), name: newUserName, username: newUserName.toLowerCase().replace(/\s/g, ''), role: newUserRole, xp: 0, league: 'Bronze', impactScore: 0, streakDays: 0, lastActivityDate: new Date().toISOString() }]); setNewUserName(''); };
   const deleteUser = (id: string) => { if (confirm('¿Estás seguro de eliminar este usuario?')) setUsers(users.filter(u => u.id !== id)); };
   const addCategory = () => { if (!newCatTitle.trim()) return; setCategories([...categories, { id: `cat-${Date.now()}`, title: newCatTitle, description: 'Nueva carpeta', topics: [], color: 'bg-slate-500' }]); setNewCatTitle(''); };
   const deleteCategory = (id: string) => { if (confirm('Se eliminarán todos los temas dentro de esta carpeta. ¿Continuar?')) setCategories(categories.filter(c => c.id !== id)); };
@@ -676,19 +702,25 @@ const App: React.FC = () => {
   const prevQuestion = () => goToQuestion(currentQuestionIndex - 1);
 
   const finishExam = () => {
-    if (currentView === 'exam') endSessionTracking('exam');
-    if (currentView === 'practice') {
-      endSessionTracking('practice');
-      if (currentExerciseSet !== null && currentUser && selectedTopic) {
-        setCompletedExercises(prev => {
-          const userRecords = prev[currentUser.id] || {};
-          const topicRecords = userRecords[selectedTopic.id] || [];
-          if (!topicRecords.includes(currentExerciseSet)) {
-             return { ...prev, [currentUser.id]: { ...userRecords, [selectedTopic.id]: [...topicRecords, currentExerciseSet] } };
-          }
-          return prev;
-        });
-      }
+    let duration = 0;
+    if (sessionStartTimeRef.current) {
+        duration = Math.round((Date.now() - sessionStartTimeRef.current) / 1000);
+    }
+
+    if (currentView === 'exam') {
+        endSessionTracking('exam');
+    } else if (currentView === 'practice') {
+        endSessionTracking('practice');
+        if (currentExerciseSet !== null && currentUser && selectedTopic) {
+            setCompletedExercises(prev => {
+              const userRecords = prev[currentUser.id] || {};
+              const topicRecords = userRecords[selectedTopic.id] || [];
+              if (!topicRecords.includes(currentExerciseSet)) {
+                 return { ...prev, [currentUser.id]: { ...userRecords, [selectedTopic.id]: [...topicRecords, currentExerciseSet] } };
+              }
+              return prev;
+            });
+        }
     }
     
     let score = 0;
@@ -700,24 +732,48 @@ const App: React.FC = () => {
       const isCorrect = cleanUser === cleanCorrect;
       if (isCorrect) score++;
       else mistakes.push({ questionText: q.text, userAnswer: selected, correctAnswer: q.correctAnswer });
-      return { 
-        questionId: q.id, 
-        questionText: q.text, 
-        selected, 
-        correct: q.correctAnswer, 
-        isCorrect, 
-        explanation: q.explanation 
-      };
+      return { questionId: q.id, questionText: q.text, selected, correct: q.correctAnswer, isCorrect, explanation: q.explanation };
     });
 
+    // ANTI-CHEAT MECHANIC: Speed Check
+    const minSecondsPerQuestion = 3; // Unrealistic to read and answer faster than this on average
+    const isFlaggedForSpeed = duration < (questions.length * minSecondsPerQuestion);
+    
     let xpEarned = 0;
     if (currentUser) {
-      // Calculate XP
-      xpEarned = score * 10; // 10 XP per correct answer
-      const updatedXP = (currentUser.xp || 0) + xpEarned;
+      // Calculate XP with Anti-cheat and Difficulty Logic
+      const baseXP = 10;
+      let multiplier = 1.0;
+      
+      // Streak Bonus
+      if (currentUser.streakDays > 5) multiplier += 0.2;
+      if (currentUser.streakDays > 10) multiplier += 0.5;
+
+      // Penalties
+      if (isFlaggedForSpeed) multiplier = 0.1; // 90% reduction for speed hacking
+
+      xpEarned = Math.floor(score * baseXP * multiplier);
       
       // Update User State
-      const updatedUser = { ...currentUser, xp: updatedXP };
+      const updatedUser = { ...currentUser, xp: (currentUser.xp || 0) + xpEarned };
+      
+      // League Promotion Logic (Simple Simulation)
+      const currentLeagueInfo = LEAGUES[updatedUser.league];
+      const nextLeague = Object.entries(LEAGUES).find(([_, info]: [string, any]) => info.minXP > currentLeagueInfo.minXP && updatedUser.xp >= info.minXP);
+      
+      if (nextLeague) {
+         updatedUser.league = nextLeague[0] as LeagueTier;
+         // Alert user of promotion could go here
+      }
+
+      // Update Mission Progress
+      const updatedMissions = missions.map(m => {
+         if (m.id === 'm1' && currentView === 'practice') return { ...m, progress: Math.min(m.goal, m.progress + 1) };
+         if (m.id === 'm2' && currentView === 'exam' && score === questions.length) return { ...m, progress: 1 };
+         return m;
+      });
+      setMissions(updatedMissions);
+
       setCurrentUser(updatedUser);
       setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
 
@@ -731,7 +787,7 @@ const App: React.FC = () => {
         mistakes,
         type: currentView === 'exam' ? 'exam' : 'practice',
         exerciseIndex: currentView === 'practice' ? currentExerciseSet! : undefined,
-        xpEarned: xpEarned
+        xpEarned
       };
       setProgressHistory(prev => [...prev, newProgress]);
     }
@@ -741,21 +797,129 @@ const App: React.FC = () => {
       total: questions.length, 
       answers: results, 
       topicTitle: selectedTopic?.title, 
-      xpEarned,
+      xpEarned, 
+      type: currentView === 'practice' ? 'practice' : 'exam', 
       timestamp: Date.now(),
-      type: currentView === 'exam' ? 'exam' : 'practice'
+      timeTakenSeconds: duration,
+      isFlaggedForSpeed
     });
     setCurrentView('results');
   };
 
-  // --- RENDERERS ---
+  // ... RENDERERS ...
 
-  // ... (Header, Sidebar, Dashboard, AdminDashboard, StudentProgress kept same)
+  const renderLeaderboard = () => {
+    const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
+    const userRankIndex = sortedUsers.findIndex(u => u.id === currentUser?.id);
+    const currentLeagueData = LEAGUES[currentUser?.league || 'Bronze'];
+
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* LEFT: League & Status */}
+          <div className="w-full md:w-1/3 space-y-6">
+             <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-t-8 ${currentLeagueData.color.split(' ')[0].replace('text-', 'border-')} p-6 text-center`}>
+                <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${currentLeagueData.color} bg-opacity-20`}>
+                   {getIcon(currentLeagueData.icon)}
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-wider">{currentUser?.league} League</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Season ends in 2 days</p>
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 mb-2 overflow-hidden">
+                   <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '65%' }}></div>
+                </div>
+                <p className="text-xs text-slate-400">Top 10 promote to next tier</p>
+             </div>
+
+             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center gap-3 mb-2">
+                   <Flame className="w-6 h-6 text-orange-400 fill-orange-400 animate-pulse" />
+                   <h3 className="font-bold text-lg">Daily Streak</h3>
+                </div>
+                <div className="flex items-baseline gap-2">
+                   <span className="text-4xl font-black">{currentUser?.streakDays}</span>
+                   <span className="text-indigo-200">days</span>
+                </div>
+                <p className="text-xs text-indigo-200 mt-2">Keep it up! 2x XP Bonus active.</p>
+             </div>
+          </div>
+
+          {/* RIGHT: Leaderboard Table */}
+          <div className="w-full md:w-2/3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+             <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <h3 className="font-bold text-xl text-slate-800 dark:text-white">Global Ranking</h3>
+                <div className="flex gap-2">
+                   <button className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">This Week</button>
+                   <button className="px-3 py-1 text-xs font-bold text-slate-400 hover:text-slate-600">All Time</button>
+                </div>
+             </div>
+             <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {sortedUsers.map((u, idx) => (
+                   <div key={u.id} className={`p-4 flex items-center gap-4 ${u.id === currentUser?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                      <div className="w-8 text-center font-bold text-slate-400 text-lg">
+                         {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-teal-400 flex items-center justify-center text-white font-bold">
+                         {u.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                         <p className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            {u.name}
+                            {u.role === 'admin' && <Shield className="w-3 h-3 text-blue-500 fill-blue-500"/>}
+                         </p>
+                         <p className="text-xs text-slate-500 dark:text-slate-400">{u.league} League • {u.impactScore} Impact</p>
+                      </div>
+                      <div className="text-right">
+                         <span className="block font-black text-slate-800 dark:text-white">{u.xp} XP</span>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </div>
+
+        {/* MISSIONS SECTION */}
+        <div className="mt-12">
+           <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+              <Target className="w-6 h-6 text-red-500"/> Active Missions
+           </h3>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {missions.map(mission => (
+                 <div key={mission.id} className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                       {getIcon(mission.icon)}
+                    </div>
+                    <div className="flex justify-between items-start mb-2">
+                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${mission.type === 'daily' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                          {mission.type}
+                       </span>
+                       <span className="text-xs font-bold text-amber-500 flex items-center gap-1">
+                          <Zap className="w-3 h-3"/> +{mission.xpReward} XP
+                       </span>
+                    </div>
+                    <h4 className="font-bold text-slate-800 dark:text-white mb-1">{mission.title}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{mission.description}</p>
+                    
+                    <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                       <div 
+                          className="bg-blue-500 h-full transition-all duration-500" 
+                          style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
+                       ></div>
+                    </div>
+                    <div className="text-right mt-1 text-xs font-medium text-slate-400">
+                       {mission.progress} / {mission.goal}
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderHeader = () => {
     if (currentView === 'login') return null;
     const currentXP = currentUser?.xp || 0;
     const level = calculateLevel(currentXP);
-    const progress = getLevelProgress(currentXP);
     const title = getUserTitle(level);
 
     return (
@@ -768,8 +932,11 @@ const App: React.FC = () => {
               </button>
             )}
             <div onClick={goHome} className="flex items-center gap-2 cursor-pointer group">
-              <div className="bg-blue-600 p-1.5 rounded-lg group-hover:bg-blue-700 transition-colors">
-                <GraduationCap className="text-white w-6 h-6" />
+              <div className="relative bg-gradient-to-br from-blue-600 to-violet-600 p-2 rounded-xl shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                <FlaskConical className="text-white w-6 h-6" />
+                <div className="absolute -top-1.5 -right-1.5 bg-white dark:bg-slate-800 rounded-full p-0.5 border-2 border-slate-100 dark:border-slate-900 shadow-sm">
+                    <MessageCircle className="w-3 h-3 text-violet-600 dark:text-violet-400" />
+                </div>
               </div>
               <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white hidden sm:block">Valen's <span className="text-blue-600 dark:text-blue-400">English Lab</span></span>
             </div>
@@ -778,15 +945,15 @@ const App: React.FC = () => {
           {currentUser && (
             <div className="flex items-center gap-3 sm:gap-6">
               {currentUser.role === 'student' && (
-                <div className="hidden md:flex flex-col items-end">
+                <div className="hidden md:flex flex-col items-end cursor-pointer" onClick={() => setCurrentView('leaderboard')}>
                   <span className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1">
                     {title}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Nivel {level}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Level {level} • {currentUser.league} League</span>
                 </div>
               )}
               
-              <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm">
+              <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm cursor-pointer hover:scale-105 transition-transform" onClick={() => setCurrentView('leaderboard')}>
                  <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                  <span className="text-sm font-bold text-amber-800 dark:text-amber-300">{currentUser.xp || 0} XP</span>
               </div>
@@ -809,21 +976,26 @@ const App: React.FC = () => {
       {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)} />}
       <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-           <h2 className="font-bold text-xl text-slate-800 dark:text-white">Menú</h2>
+           <h2 className="font-bold text-xl text-slate-800 dark:text-white">Menu</h2>
            <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
         <div className="p-4 space-y-2">
            <button onClick={() => { goHome(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
-             <Home className="w-5 h-5"/> Inicio
+             <Home className="w-5 h-5"/> Home
            </button>
            {currentUser?.role === 'student' && (
-             <button onClick={() => { setCurrentView('student-progress'); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
-               <BarChart className="w-5 h-5"/> Mi Progreso
-             </button>
+             <>
+               <button onClick={() => { setCurrentView('student-progress'); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+                 <BarChart className="w-5 h-5"/> My Progress
+               </button>
+               <button onClick={() => { setCurrentView('leaderboard'); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+                 <Trophy className="w-5 h-5"/> Leaderboard
+               </button>
+             </>
            )}
            <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium">
-             <LogOut className="w-5 h-5"/> Cerrar Sesión
+             <LogOut className="w-5 h-5"/> Logout
            </button>
         </div>
         <div className="absolute bottom-0 w-full p-6 border-t border-slate-100 dark:border-slate-800">
@@ -845,10 +1017,10 @@ const App: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-12 text-center animate-fade-in-up">
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-4 tracking-tight">
-          Hola, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">{currentUser?.name}</span> 👋
+          Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">{currentUser?.name}</span> 👋
         </h1>
         <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          ¿Qué vamos a dominar hoy? Selecciona una categoría para empezar tu aventura.
+          Ready to grind? Select a category to boost your XP.
         </p>
       </div>
       
@@ -869,7 +1041,7 @@ const App: React.FC = () => {
             <p className="text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 leading-relaxed">{category.description}</p>
             
             <div className="flex items-center justify-between mt-auto">
-               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{category.topics.length} Temas</span>
+               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{category.topics.length} Topics</span>
                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                   <ChevronRight className="w-5 h-5"/>
                </div>
@@ -1141,6 +1313,192 @@ const App: React.FC = () => {
     );
   };
 
+  const renderTopicDetail = () => {
+    if (!selectedCategory) return null;
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <button 
+          onClick={() => { setSelectedCategory(null); setCurrentView('dashboard'); }}
+          className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" /> Volver a Categorías
+        </button>
+
+        <div className="mb-8 text-center">
+          <div className={`inline-flex p-4 rounded-2xl ${selectedCategory.color} mb-4 shadow-lg shadow-blue-500/20`}>
+             <Layout className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{selectedCategory.title}</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">{selectedCategory.description}</p>
+        </div>
+
+        <div className="space-y-4">
+          {selectedCategory.topics.map((topic) => (
+            <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+               <div className="p-6">
+                 <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                       <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400">
+                         {getIcon(topic.icon)}
+                       </div>
+                       <div>
+                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
+                         <p className="text-slate-500 dark:text-slate-400 mt-1">{topic.description}</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+                    <Button variant="secondary" onClick={() => startStudy(topic)} className="flex items-center justify-center gap-2">
+                      <BookOpen className="w-4 h-4" /> Estudiar
+                    </Button>
+                    <Button variant="outline" onClick={() => preparePractice(topic)} className="flex items-center justify-center gap-2">
+                       <Brain className="w-4 h-4" /> Practicar
+                    </Button>
+                    <Button variant="outline" onClick={() => startExam(topic)} className="flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-900/50">
+                       <CheckCircle className="w-4 h-4" /> Examen
+                    </Button>
+                 </div>
+               </div>
+            </div>
+          ))}
+
+          {selectedCategory.topics.length === 0 && (
+             <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+               <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"/>
+               <p className="text-slate-500 dark:text-slate-400">No hay temas en esta categoría aún.</p>
+             </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPracticeSelection = () => {
+    if (!selectedTopic) return null;
+    const totalQuestions = selectedTopic.manualQuestions?.length || 0;
+    const exercisesCount = Math.ceil(totalQuestions / 10);
+    const userCompleted = (currentUser && completedExercises[currentUser.id]?.[selectedTopic.id]) || [];
+    const isBossUnlocked = exercisesCount > 0 && userCompleted.length === exercisesCount;
+
+    const getBestScore = (idx: number) => {
+      if (!currentUser) return 0;
+      const attempts = progressHistory.filter(p => p.userId === currentUser.id && p.topicId === selectedTopic.id && p.type === 'practice' && p.exerciseIndex === idx);
+      if (attempts.length === 0) return 0;
+      const best = attempts.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+      return best.score;
+    };
+
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <button 
+            onClick={() => setCurrentView('topic-detail')}
+            className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" /> Volver
+          </button>
+          <div className="text-right">
+             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{selectedTopic.title}</h2>
+             <p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona un nivel de práctica</p>
+          </div>
+        </div>
+
+        {exercisesCount > 0 ? (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: exercisesCount }).map((_, idx) => {
+                const isCompleted = userCompleted.includes(idx);
+                const bestScore = getBestScore(idx);
+                const pct = (bestScore / 10) * 100;
+                const rank = getRank(pct);
+                const RankIcon = rank.icon;
+                
+                return (
+                  <div 
+                    key={idx}
+                    onClick={() => startPractice(selectedTopic, idx)}
+                    className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group ${isCompleted ? 'bg-white dark:bg-slate-800 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/10' : 'bg-white dark:bg-slate-800 hover:shadow-xl border border-slate-200 dark:border-slate-700'}`}
+                  >
+                    {isCompleted && (
+                      <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+                        COMPLETADO
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-start mb-6">
+                      <div className={`p-4 rounded-xl ${isCompleted ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'} transition-colors`}>
+                        <Brain className="w-8 h-8"/>
+                      </div>
+                      {isCompleted ? (
+                         <div className={`flex flex-col items-end`}>
+                            <div className={`p-2 rounded-full mb-1 ${rank.color} border-2`}>
+                               <RankIcon className="w-5 h-5"/>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rank.name}</span>
+                         </div>
+                      ) : (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wider">
+                           Empezar <ChevronRight className="w-4 h-4"/>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        Práctica {idx + 1}
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">10 Preguntas de entrenamiento</p>
+                      
+                      {isCompleted && (
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                           <div 
+                             className={`h-full rounded-full ${pct >= 70 ? 'bg-emerald-500' : 'bg-orange-500'}`} 
+                             style={{ width: `${pct}%` }}
+                           ></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Boss Challenge Unlock */}
+            {isBossUnlocked && (
+               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-1 shadow-2xl transform hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => startExam(selectedTopic)}>
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                  <div className="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                     <div className="flex items-center gap-6">
+                       <div className="p-4 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-lg animate-pulse">
+                          <Zap className="w-8 h-8" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 mb-1">DESAFÍO FINAL DESBLOQUEADO</h3>
+                          <p className="text-slate-600 dark:text-slate-300">Demuestra tu maestría en el Examen Oficial.</p>
+                       </div>
+                     </div>
+                     <Button className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-100 whitespace-nowrap">
+                        Comenzar Examen
+                     </Button>
+                  </div>
+               </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+             <div className="bg-slate-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Brain className="w-8 h-8 text-slate-400" />
+             </div>
+             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No hay ejercicios</h3>
+             <p className="text-slate-500 dark:text-slate-400">El profesor aún no ha añadido prácticas para este tema.</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderStudyMode = () => (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -1151,10 +1509,10 @@ const App: React.FC = () => {
       </div>
 
       <div className="space-y-8 animate-fade-in">
-        {renderMarkdown(theoryContent, { 
-          onGenerate: generateComic, 
-          isGenerating: isGeneratingComic, 
-          imageUrl: comicUrl 
+        {renderMarkdown(theoryContent, {
+           onGenerate: generateComic,
+           isGenerating: isGeneratingComic,
+           imageUrl: comicUrl
         })}
       </div>
 
@@ -1311,197 +1669,10 @@ const App: React.FC = () => {
     );
   };
 
-  const renderPracticeSelection = () => {
-    if (!selectedTopic) return null;
-    const totalQuestions = selectedTopic.manualQuestions?.length || 0;
-    const exercisesCount = Math.ceil(totalQuestions / 10);
-    const userCompleted = (currentUser && completedExercises[currentUser.id]?.[selectedTopic.id]) || [];
-    const isBossUnlocked = exercisesCount > 0 && userCompleted.length === exercisesCount;
-
-    const getBestScore = (idx: number) => {
-      if (!currentUser) return 0;
-      const attempts = progressHistory.filter(p => p.userId === currentUser.id && p.topicId === selectedTopic.id && p.type === 'practice' && p.exerciseIndex === idx);
-      if (attempts.length === 0) return 0;
-      const best = attempts.reduce((prev, current) => (prev.score > current.score) ? prev : current);
-      return best.score;
-    };
-
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={() => setCurrentView('topic-detail')}
-            className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 mr-1" /> Volver
-          </button>
-          <div className="text-right">
-             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{selectedTopic.title}</h2>
-             <p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona un nivel de práctica</p>
-          </div>
-        </div>
-
-        {exercisesCount > 0 ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: exercisesCount }).map((_, idx) => {
-                const isCompleted = userCompleted.includes(idx);
-                const bestScore = getBestScore(idx);
-                const pct = (bestScore / 10) * 100;
-                const rank = getRank(pct);
-                const RankIcon = rank.icon;
-                
-                return (
-                  <div 
-                    key={idx}
-                    onClick={() => startPractice(selectedTopic, idx)}
-                    className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group ${isCompleted ? 'bg-white dark:bg-slate-800 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/10' : 'bg-white dark:bg-slate-800 hover:shadow-xl border border-slate-200 dark:border-slate-700'}`}
-                  >
-                    {isCompleted && (
-                      <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
-                        COMPLETADO
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-start mb-6">
-                      <div className={`p-4 rounded-xl ${isCompleted ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'} transition-colors`}>
-                        <Brain className="w-8 h-8"/>
-                      </div>
-                      {isCompleted ? (
-                         <div className={`flex flex-col items-end`}>
-                            <div className={`p-2 rounded-full mb-1 ${rank.color} border-2`}>
-                               <RankIcon className="w-5 h-5"/>
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rank.name}</span>
-                         </div>
-                      ) : (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wider">
-                           Empezar <ChevronRight className="w-4 h-4"/>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        Práctica {idx + 1}
-                      </h3>
-                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">10 Preguntas de entrenamiento</p>
-                      
-                      {isCompleted && (
-                        <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                           <div 
-                             className={`h-full rounded-full ${pct >= 70 ? 'bg-emerald-500' : 'bg-orange-500'}`} 
-                             style={{ width: `${pct}%` }}
-                           ></div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Boss Challenge Unlock */}
-            {isBossUnlocked && (
-               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-1 shadow-2xl transform hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => startExam(selectedTopic)}>
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                  <div className="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                     <div className="flex items-center gap-6">
-                       <div className="p-4 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-lg animate-pulse">
-                          <Zap className="w-8 h-8" />
-                       </div>
-                       <div>
-                          <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 mb-1">DESAFÍO FINAL DESBLOQUEADO</h3>
-                          <p className="text-slate-600 dark:text-slate-300">Demuestra tu maestría en el Examen Oficial.</p>
-                       </div>
-                     </div>
-                     <Button className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-100 whitespace-nowrap">
-                        Comenzar Examen
-                     </Button>
-                  </div>
-               </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-             <div className="bg-slate-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-8 h-8 text-slate-400" />
-             </div>
-             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No hay ejercicios</h3>
-             <p className="text-slate-500 dark:text-slate-400">El profesor aún no ha añadido prácticas para este tema.</p>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderTopicDetail = () => {
-    if (!selectedCategory) return null;
-
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <button 
-          onClick={() => { setSelectedCategory(null); setCurrentView('dashboard'); }}
-          className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 mr-1" /> Volver a Categorías
-        </button>
-
-        <div className="mb-8 text-center">
-          <div className={`inline-flex p-4 rounded-2xl ${selectedCategory.color} mb-4 shadow-lg shadow-blue-500/20`}>
-             <Layout className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{selectedCategory.title}</h1>
-          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">{selectedCategory.description}</p>
-        </div>
-
-        <div className="space-y-4">
-          {selectedCategory.topics.map((topic) => (
-            <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
-               <div className="p-6">
-                 <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                       <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400">
-                         {getIcon(topic.icon)}
-                       </div>
-                       <div>
-                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
-                         <p className="text-slate-500 dark:text-slate-400 mt-1">{topic.description}</p>
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
-                    <Button variant="secondary" onClick={() => startStudy(topic)} className="flex items-center justify-center gap-2">
-                      <BookOpen className="w-4 h-4" /> Estudiar
-                    </Button>
-                    <Button variant="outline" onClick={() => preparePractice(topic)} className="flex items-center justify-center gap-2">
-                       <Brain className="w-4 h-4" /> Practicar
-                    </Button>
-                    <Button variant="outline" onClick={() => startExam(topic)} className="flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-900/50">
-                       <CheckCircle className="w-4 h-4" /> Examen
-                    </Button>
-                 </div>
-               </div>
-            </div>
-          ))}
-
-          {selectedCategory.topics.length === 0 && (
-             <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
-               <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"/>
-               <p className="text-slate-500 dark:text-slate-400">No hay temas en esta categoría aún.</p>
-             </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const renderResults = () => {
     if (!examResult) return null;
     const percentage = Math.round((examResult.score / examResult.total) * 100);
     const isPass = percentage >= 50;
-    const rank = getRank(percentage);
 
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 animate-in fade-in zoom-in duration-300">
@@ -1512,31 +1683,38 @@ const App: React.FC = () => {
               {isPass ? <Trophy className="w-12 h-12" /> : <XCircle className="w-12 h-12" />}
             </div>
 
-            <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">{isPass ? '¡Buen trabajo!' : 'Sigue practicando'}</h2>
+            <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">{isPass ? 'GG Well Played!' : 'Nice Try!'}</h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-8">{examResult.topicTitle}</p>
             
+            {examResult.isFlaggedForSpeed && (
+               <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm flex items-center justify-center gap-2">
+                  <AlertCircle className="w-4 h-4"/> 
+                  <span>Suspiciously fast completion. XP reduced.</span>
+               </div>
+            )}
+
             <div className="flex justify-center gap-8 mb-8">
                <div className="text-center">
                   <span className="block text-5xl font-black text-slate-800 dark:text-white mb-1">{percentage}%</span>
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Puntuación</span>
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Score</span>
                </div>
                <div className="w-px bg-slate-200 dark:bg-slate-700"></div>
                <div className="text-center">
                   <span className="block text-5xl font-black text-slate-800 dark:text-white mb-1">{examResult.score}/{examResult.total}</span>
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Aciertos</span>
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Correct</span>
                </div>
             </div>
 
             {isPass && examResult.xpEarned && (
                <div className="inline-flex items-center gap-2 px-6 py-3 bg-amber-100 dark:bg-amber-900/30 rounded-full border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 font-bold mb-8 animate-bounce">
-                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> +{examResult.xpEarned} XP Ganados
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> +{examResult.xpEarned} XP Earned
                </div>
             )}
           </div>
 
           <div className="bg-slate-50 dark:bg-slate-900/50 p-8 border-t border-slate-100 dark:border-slate-700">
             <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-blue-500"/> Revisión de Respuestas
+              <CheckCircle className="w-5 h-5 text-blue-500"/> Performance Review
             </h3>
             <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                {examResult.answers.map((ans, idx) => {
@@ -1552,9 +1730,9 @@ const App: React.FC = () => {
                             <p className="font-medium text-slate-800 dark:text-slate-200 mb-2">{question.text}</p>
                             <div className="text-sm space-y-1">
                                {!ans.isCorrect && (
-                                  <p className="text-red-600 dark:text-red-400">Tu respuesta: <span className="font-semibold">{ans.selected || "(Sin responder)"}</span></p>
+                                  <p className="text-red-600 dark:text-red-400">Your Answer: <span className="font-semibold">{ans.selected || "(Skipped)"}</span></p>
                                )}
-                               <p className="text-green-600 dark:text-green-400">Correcta: <span className="font-semibold">{ans.correct}</span></p>
+                               <p className="text-green-600 dark:text-green-400">Correct: <span className="font-semibold">{ans.correct}</span></p>
                             </div>
                          </div>
                       </div>
@@ -1564,14 +1742,14 @@ const App: React.FC = () => {
             </div>
             
             <div className="mt-8 flex gap-4">
-              <Button onClick={() => setCurrentView('topic-detail')} variant="outline" fullWidth>Volver al Tema</Button>
+              <Button onClick={() => setCurrentView('topic-detail')} variant="outline" fullWidth>Back to Topic</Button>
               <Button onClick={() => { 
                 if (currentView === 'exam' || currentView === 'practice') {
                   startStudy(selectedTopic!); 
                 } else {
-                  setCurrentView('topic-detail');
+                  setCurrentView('leaderboard');
                 }
-              }} fullWidth>Continuar</Button>
+              }} fullWidth>Continue to Leaderboard</Button>
             </div>
           </div>
         </div>
@@ -1591,6 +1769,7 @@ const App: React.FC = () => {
         {currentView === 'dashboard' && renderDashboard()}
         {currentView === 'topic-detail' && renderTopicDetail()}
         {currentView === 'practice-select' && renderPracticeSelection()}
+        {currentView === 'leaderboard' && renderLeaderboard()}
         {(currentView === 'study' || currentView === 'practice' || currentView === 'exam') && isLoading && <LoadingSpinner />}
         {!isLoading && currentView === 'study' && renderStudyMode()}
         {!isLoading && currentView === 'practice' && renderQuestionCard(false)}
@@ -1600,5 +1779,3 @@ const App: React.FC = () => {
     </div>
   );
 }
-
-export default App;

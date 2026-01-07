@@ -13,6 +13,7 @@ export interface Topic {
   icon: string;
   manualTheory?: string; 
   manualQuestions?: Question[]; 
+  examQuestions?: Question[];
 }
 
 export interface Category {
@@ -25,13 +26,31 @@ export interface Category {
 
 export type Role = 'admin' | 'student';
 
+export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond';
+
 export interface User {
   id: string;
   name: string;
   role: Role;
   username: string; 
   xp: number; 
-  avatar?: string; // Optional avatar initialization
+  league: LeagueTier;
+  impactScore: number; // For social contribution
+  streakDays: number;
+  lastActivityDate: string; // YYYY-MM-DD
+  avatar?: string; 
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  type: 'daily' | 'weekly' | 'seasonal';
+  goal: number;
+  progress: number;
+  completed: boolean;
+  icon: string;
 }
 
 export interface Assignment {
@@ -55,7 +74,7 @@ export type AppView =
   | 'results' 
   | 'student-progress' 
   | 'leaderboard'
-  | 'assignments'; // Added new view
+  | 'assignments'; 
 
 export interface ExamResult {
   score: number;
@@ -72,6 +91,8 @@ export interface ExamResult {
   topicTitle?: string;
   xpEarned: number;
   type: 'practice' | 'exam';
+  timeTakenSeconds?: number;
+  isFlaggedForSpeed?: boolean; // Anti-cheat flag
 }
 
 // Analytics Types
