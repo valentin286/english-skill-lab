@@ -70,9 +70,7 @@ import {
   MessageCircle,
   Link2,
   FolderOpen,
-  GripVertical,
-  Folder,
-  CornerDownRight
+  GripVertical
 } from 'lucide-react';
 
 // Initialize AI for Image Generation
@@ -120,14 +118,13 @@ const getIcon = (iconName: string) => {
     FileText: <FileText className="w-5 h-5" />,
     Mail: <Mail className="w-5 h-5" />,
     Link: <Link className="w-5 h-5" />,
+    Link2: <Link2 className="w-5 h-5" />,
     Shield: <Shield className="w-5 h-5" />,
     Crown: <Crown className="w-5 h-5" />,
     Zap: <Zap className="w-5 h-5" />,
     Target: <Target className="w-5 h-5" />,
     Calendar: <Calendar className="w-5 h-5" />,
     Layers: <Layers className="w-5 h-5" />,
-    Link2: <Link2 className="w-5 h-5" />,
-    FolderOpen: <FolderOpen className="w-5 h-5" />
   };
   return icons[iconName] || <BookOpen className="w-5 h-5" />;
 };
@@ -135,6 +132,9 @@ const getIcon = (iconName: string) => {
 const INITIAL_USERS: User[] = [
   { id: '1', name: 'Profesor Admin', username: 'admin', role: 'admin', xp: 500, league: 'Gold', impactScore: 100, streakDays: 10, lastActivityDate: '2023-10-27' },
   { id: '2', name: 'Estudiante Demo', username: 'student', role: 'student', xp: 120, league: 'Bronze', impactScore: 10, streakDays: 2, lastActivityDate: '2023-10-27' },
+  { id: '3', name: 'Alex Johnson', username: 'alexj', role: 'student', xp: 2150, league: 'Gold', impactScore: 45, streakDays: 15, lastActivityDate: '2023-10-27' },
+  { id: '4', name: 'Sarah Lee', username: 'sarah', role: 'student', xp: 800, league: 'Silver', impactScore: 20, streakDays: 5, lastActivityDate: '2023-10-26' },
+  { id: '5', name: 'Mike Brown', username: 'mike', role: 'student', xp: 3500, league: 'Platinum', impactScore: 120, streakDays: 30, lastActivityDate: '2023-10-27' },
 ];
 
 // Helper: Normalize Text for flexible matching
@@ -229,12 +229,33 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
     else if (line.startsWith('### ')) {
       currentCardBuffer.push(<h4 key={i} className="text-lg font-bold mt-4 text-slate-700 dark:text-slate-200">{line.replace('### ', '')}</h4>);
     }
+    else if (line.startsWith('![')) {
+      const match = line.match(/!\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        currentCardBuffer.push(
+          <div key={i} className="my-6 rounded-xl overflow-hidden shadow-2xl border-4 border-slate-800 dark:border-slate-700 transform hover:scale-[1.02] transition-transform duration-500">
+            <img src={match[2]} alt={match[1]} className="w-full h-auto object-cover" />
+            {match[1] && <div className="bg-slate-900/80 text-white text-xs p-2 text-center w-full backdrop-blur-sm">{match[1]}</div>}
+          </div>
+        );
+      }
+    }
     else if (line.startsWith('- ') || line.startsWith('* ')) {
       currentCardBuffer.push(
         <li key={i} className="ml-4 list-none relative pl-6 text-slate-700 dark:text-slate-300 py-1">
           <span className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-teal-500"></span>
           {renderInlineText(line.replace(/^[-*] /, ''))}
         </li>
+      );
+    }
+    else if (line.startsWith('> ')) {
+      currentCardBuffer.push(
+        <div key={i} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg p-4 my-4 flex gap-3">
+          <Lightbulb className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
+          <div className="text-slate-700 dark:text-slate-300 italic text-sm leading-relaxed">
+            {renderInlineText(line.replace('> ', ''))}
+          </div>
+        </div>
       );
     }
     else {
@@ -246,77 +267,230 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
   return <div className="space-y-2">{elements}</div>;
 };
 
-// ... LOGIN VIEW & CONTENT EDITOR (unchanged) ...
 const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin }) => {
   const [input, setInput] = useState('');
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4 transition-colors">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg max-w-md w-full border border-slate-200 dark:border-slate-700">
-        <h1 className="text-2xl font-bold text-center text-slate-800 dark:text-white mb-8">Valen's English Lab</h1>
+        <div className="flex justify-center mb-6">
+          <div className="relative bg-gradient-to-br from-blue-600 to-violet-600 p-4 rounded-2xl shadow-xl shadow-blue-500/30">
+            <FlaskConical className="text-white w-12 h-12" />
+            <div className="absolute -top-3 -right-3 bg-white dark:bg-slate-800 rounded-full p-1.5 border-4 border-slate-100 dark:border-slate-900 shadow-sm">
+                <MessageCircle className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+            </div>
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold text-center text-slate-800 dark:text-white mb-2">Valen's English Lab</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-center mb-8">Accede para continuar aprendiendo</p>
+        
         <form onSubmit={(e) => { e.preventDefault(); onLogin(input); }} className="space-y-4">
-          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder='Usuario (ej: admin)' className="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:text-white" />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Usuario</label>
+            <input 
+              type="text" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder='Ej: admin, student'
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            />
+          </div>
           <Button type="submit" fullWidth>Entrar</Button>
         </form>
+        <div className="mt-4 text-xs text-center text-slate-400 dark:text-slate-500">
+          <p>Admin: admin</p>
+          <p>User: student</p>
+        </div>
       </div>
     </div>
   );
 };
 
-const ContentEditor: React.FC<{ topic: Topic; onSave: (updatedTopic: Topic) => void; onCancel: () => void }> = ({ topic, onSave, onCancel }) => {
+const ContentEditor: React.FC<{ 
+  topic: Topic; 
+  onSave: (updatedTopic: Topic) => void; 
+  onCancel: () => void 
+}> = ({ topic, onSave, onCancel }) => {
+  const [activeTab, setActiveTab] = useState<'theory' | 'questions'>('theory');
   const [theory, setTheory] = useState(topic.manualTheory || '');
+  const [questions, setQuestions] = useState<Question[]>(topic.manualQuestions || []);
+  const [showPreview, setShowPreview] = useState(false);
+  const [qText, setQText] = useState('');
+  const [qOptions, setQOptions] = useState(['', '', '', '']);
+  const [qCorrect, setQCorrect] = useState(0); 
+  const [qExplanation, setQExplanation] = useState('');
+
+  const handleSave = () => {
+    onSave({
+      ...topic,
+      manualTheory: theory.trim() !== '' ? theory : undefined,
+      manualQuestions: questions.length > 0 ? questions : undefined
+    });
+  };
+
+  const addQuestion = () => {
+    if (!qText || qOptions.some(o => !o)) return alert("Completa todos los campos");
+    const newQ: Question = {
+      id: Date.now().toString(),
+      text: qText,
+      options: [...qOptions],
+      correctAnswer: qOptions[qCorrect],
+      explanation: qExplanation || 'Respuesta correcta.'
+    };
+    setQuestions([...questions, newQ]);
+    setQText('');
+    setQOptions(['', '', '', '']);
+    setQCorrect(0);
+    setQExplanation('');
+  };
+
+  const deleteQuestion = (idx: number) => {
+    setQuestions(questions.filter((_, i) => i !== idx));
+  };
+
+  const updateOption = (idx: number, val: string) => {
+    const newOpts = [...qOptions];
+    newOpts[idx] = val;
+    setQOptions(newOpts);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex justify-between mb-4"><h2 className="text-2xl font-bold dark:text-white">Editor: {topic.title}</h2><div className="flex gap-2"><Button onClick={onCancel} variant="outline">Cancelar</Button><Button onClick={() => onSave({...topic, manualTheory: theory})}>Guardar</Button></div></div>
-      <textarea className="w-full h-96 p-4 border rounded-lg font-mono bg-white dark:bg-slate-900 dark:text-white" value={theory} onChange={(e) => setTheory(e.target.value)} placeholder="# Markdown Theory..." />
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Editando: {topic.title}</h2>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+          <Button onClick={handleSave}><Save className="w-4 h-4 mr-2 inline" /> Guardar Cambios</Button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="flex border-b border-slate-200 dark:border-slate-700">
+          <button onClick={() => setActiveTab('theory')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'theory' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Teoría (Markdown)</button>
+          <button onClick={() => setActiveTab('questions')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'questions' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Preguntas ({questions.length})</button>
+        </div>
+
+        <div className="p-6">
+          {activeTab === 'theory' ? (
+            <div className="flex flex-col h-full">
+              <div className="flex justify-between items-center mb-4">
+                 <p className="text-sm text-slate-500 dark:text-slate-400">{showPreview ? "Vista previa" : "Escribe la teoría usando Markdown"}</p>
+                 <button onClick={() => setShowPreview(!showPreview)} className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors">
+                   {showPreview ? <><Code className="w-4 h-4" /> Editar</> : <><Eye className="w-4 h-4" /> Previsualizar</>}
+                 </button>
+              </div>
+              {showPreview ? <div className="w-full min-h-[24rem] p-6 border rounded-lg bg-slate-50 dark:bg-slate-900 max-w-none overflow-y-auto">{renderMarkdown(theory)}</div> : <textarea className="w-full h-96 p-4 border rounded-lg font-mono text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white" value={theory} onChange={(e) => setTheory(e.target.value)} placeholder="# Título..." />}
+            </div>
+          ) : (
+             <div className="space-y-8">
+               <div className="space-y-4">
+                 {questions.map((q, idx) => (
+                   <div key={q.id} className="p-4 border rounded-lg flex justify-between items-start">
+                     <div><p className="font-medium text-slate-800 dark:text-slate-200">{idx + 1}. {q.text}</p><p className="text-sm text-green-600 dark:text-green-400 mt-1">Correcta: {q.correctAnswer}</p></div>
+                     <button onClick={() => deleteQuestion(idx)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
+                   </div>
+                 ))}
+                 {questions.length === 0 && <p className="text-slate-400 italic">No hay preguntas creadas.</p>}
+               </div>
+               <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-4">Añadir Nueva Pregunta</h4>
+                <div className="space-y-3">
+                  <input className="w-full p-2 border rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Enunciado" value={qText} onChange={e => setQText(e.target.value)}/>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {qOptions.map((opt, i) => (<div key={i} className="flex items-center gap-2"><input type="radio" name="correctOpt" checked={qCorrect === i} onChange={() => setQCorrect(i)} /><input className="flex-1 p-2 border rounded text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white" placeholder={`Opción ${i + 1}`} value={opt} onChange={e => updateOption(i, e.target.value)}/></div>))}
+                  </div>
+                  <textarea className="w-full p-2 border rounded text-sm h-20 bg-white dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Explicación..." value={qExplanation} onChange={e => setQExplanation(e.target.value)}/>
+                  <Button onClick={addQuestion} size="sm" fullWidth>Añadir Pregunta</Button>
+                </div>
+              </div>
+             </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(() => JSON.parse(localStorage.getItem('app_users') || JSON.stringify(INITIAL_USERS)));
-  const [categories, setCategories] = useState<Category[]>(() => JSON.parse(localStorage.getItem('app_categories') || JSON.stringify(INITIAL_CATEGORIES)));
-  const [progressHistory, setProgressHistory] = useState<UserProgress[]>(() => JSON.parse(localStorage.getItem('app_progress') || '[]'));
-  const [studySessions, setStudySessions] = useState<StudySession[]>(() => JSON.parse(localStorage.getItem('app_sessions') || '[]'));
-  const [completedExercises, setCompletedExercises] = useState<Record<string, Record<string, number[]>>>(() => JSON.parse(localStorage.getItem('app_completed_exercises') || '{}'));
-  const [missions, setMissions] = useState<Mission[]>(() => JSON.parse(localStorage.getItem('app_missions') || JSON.stringify(INITIAL_MISSIONS)));
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('app_users');
+    return saved ? JSON.parse(saved) : INITIAL_USERS;
+  });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const saved = localStorage.getItem('app_categories');
+    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
+  });
+
+  const [progressHistory, setProgressHistory] = useState<UserProgress[]>(() => {
+    const saved = localStorage.getItem('app_progress');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [studySessions, setStudySessions] = useState<StudySession[]>(() => {
+    const saved = localStorage.getItem('app_sessions');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [completedExercises, setCompletedExercises] = useState<Record<string, Record<string, number[]>>>(() => {
+    const saved = localStorage.getItem('app_completed_exercises');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [missions, setMissions] = useState<Mission[]>(() => {
+    const saved = localStorage.getItem('app_missions');
+    return saved ? JSON.parse(saved) : INITIAL_MISSIONS;
+  });
 
   const sessionStartTimeRef = useRef<number | null>(null);
+
   const [currentView, setCurrentView] = useState<AppView | 'practice-select'>('login');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+
   const [isTheoryPanelOpen, setIsTheoryPanelOpen] = useState(false);
   const [currentExerciseSet, setCurrentExerciseSet] = useState<number | null>(null);
+
   const [topicToEdit, setTopicToEdit] = useState<{catId: string, topic: Topic} | null>(null);
   const [editingCatMeta, setEditingCatMeta] = useState<{id: string, title: string, description: string} | null>(null);
+
   const [theoryContent, setTheoryContent] = useState<string>('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
   const [comicUrl, setComicUrl] = useState<string | null>(null);
   const [isGeneratingComic, setIsGeneratingComic] = useState(false);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [showFeedback, setShowFeedback] = useState(false);
   const [examResult, setExamResult] = useState<ExamResult | null>(null);
+
   const [adminTab, setAdminTab] = useState<'users' | 'resources' | 'analytics'>('users');
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('student');
   const [newCatTitle, setNewCatTitle] = useState('');
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  
+  // DRAG AND DROP STATE
+  const [draggedTopic, setDraggedTopic] = useState<{ topicId: string, sourceCatId: string } | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<{ id: string, type: 'category' | 'group' } | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [creatingFolderIn, setCreatingFolderIn] = useState<string | null>(null);
+
   const [analyticsStudentId, setAnalyticsStudentId] = useState<string | null>(null);
 
-  // --- DRAG AND DROP STATE ---
-  const [draggedTopic, setDraggedTopic] = useState<{ topicId: string, sourceCatId: string } | null>(null);
-  const [activeDropZone, setActiveDropZone] = useState<string | null>(null); // To highlight drop areas
-  const [creatingFolderIn, setCreatingFolderIn] = useState<string | null>(null); // CatID where we are typing a new folder name
-  const [newFolderName, setNewFolderName] = useState("");
-
   useEffect(() => {
-    if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); } 
-    else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   }, [darkMode]);
 
   useEffect(() => { localStorage.setItem('app_users', JSON.stringify(users)); }, [users]);
@@ -326,177 +500,692 @@ export default function App() {
   useEffect(() => { localStorage.setItem('app_completed_exercises', JSON.stringify(completedExercises)); }, [completedExercises]);
   useEffect(() => { localStorage.setItem('app_missions', JSON.stringify(missions)); }, [missions]);
 
-  // ... (Session Logic, Login, Logout, etc. same as before)
   const startSessionTracking = () => { sessionStartTimeRef.current = Date.now(); };
-  const endSessionTracking = (activityType: 'study' | 'practice' | 'exam') => { 
+
+  const endSessionTracking = (activityType: 'study' | 'practice' | 'exam') => {
     if (!sessionStartTimeRef.current || !currentUser || !selectedTopic) return;
     const duration = Math.round((Date.now() - sessionStartTimeRef.current) / 1000); 
-    setStudySessions(prev => [...prev, { id: Date.now().toString(), userId: currentUser.id, userName: currentUser.name, startTime: sessionStartTimeRef.current!, durationSeconds: duration, activityType, topicId: selectedTopic.id, timestamp: Date.now() }]);
-    sessionStartTimeRef.current = null; 
+    const newSession: StudySession = {
+      id: Date.now().toString(),
+      userId: currentUser.id,
+      userName: currentUser.name,
+      startTime: sessionStartTimeRef.current,
+      durationSeconds: duration,
+      activityType,
+      topicId: selectedTopic.id,
+      timestamp: Date.now()
+    };
+    setStudySessions(prev => [...prev, newSession]);
+    sessionStartTimeRef.current = null;
   };
 
   const handleLogin = (username: string) => {
     const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (user) { setCurrentUser(user); setCurrentView(user.role === 'admin' ? 'admin-dashboard' : 'dashboard'); } 
-    else alert('Usuario no encontrado.');
+    if (user) {
+      setCurrentUser(user);
+      if (user.role === 'admin') setCurrentView('admin-dashboard');
+      else setCurrentView('dashboard');
+    } else alert('Usuario no encontrado.');
   };
 
-  const handleLogout = () => { setCurrentUser(null); setCurrentView('login'); setSidebarOpen(false); resetSession(); };
-  const goHome = () => { setCurrentView(currentUser?.role === 'admin' ? 'admin-dashboard' : 'dashboard'); resetSession(); };
-  const selectCategory = (category: Category) => { setSelectedCategory(category); setCurrentView('topic-detail'); };
-  const resetSession = () => { setTheoryContent(''); setQuestions([]); setCurrentQuestionIndex(0); setUserAnswers({}); setShowFeedback(false); setExamResult(null); setComicUrl(null); };
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentView('login');
+    setSidebarOpen(false);
+    resetSession();
+    setSelectedCategory(null);
+    setSelectedTopic(null);
+  };
+
+  const goHome = () => {
+    if (currentUser?.role === 'admin') setCurrentView('admin-dashboard');
+    else setCurrentView('dashboard');
+    setSelectedCategory(null);
+    setSelectedTopic(null);
+    resetSession();
+  };
+
+  const selectCategory = (category: Category) => {
+    setSelectedCategory(category);
+    setCurrentView('topic-detail');
+  };
+
+  const resetSession = () => {
+    setTheoryContent('');
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setShowFeedback(false);
+    setExamResult(null);
+    setIsTheoryPanelOpen(false);
+    setCurrentExerciseSet(null);
+    setComicUrl(null);
+    setIsGeneratingComic(false);
+  };
 
   const generateComic = async () => {
     if (!selectedTopic) return;
     setIsGeneratingComic(true);
     try {
-      const prompt = `Create a 2-panel educational comic strip pixel art style about ${selectedTopic.title}.`;
-      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash-image', contents: { parts: [{ text: prompt }] } });
+      let prompt = "Create a 2-panel educational comic strip pixel art style. ";
+      
+      if (selectedTopic.id === 'past-simple-cont') {
+         prompt += "Left panel: A detective in a trench coat investigating a crime scene with a magnifying glass (Past Continuous 'was investigating'). Right panel: The same detective suddenly finding a glowing golden key on the floor, surprised (Past Simple 'found'). 16-bit pixel art.";
+      } else if (selectedTopic.id === 'pres-simple-cont') {
+         prompt += "Left panel: A detective standing calmly in an office smoking a pipe, caption 'I solve crimes'. Right panel: The same detective running fast chasing a shadowy thief in a city street, sweating, caption 'I am chasing a suspect'. 16-bit pixel art.";
+      } else if (selectedTopic.id === 'past-perfect-simple') {
+         prompt += "Left panel: A train leaving the station, seen from the back, clock showing 9:00 (Past Perfect 'had left'). Right panel: Two people arriving at the empty platform, clock showing 9:05 (Past Simple 'arrived'). 16-bit pixel art.";
+      } else if (selectedTopic.id === 'perf-continuous') {
+         prompt += "Left panel: A runner jogging in a park, sun shining, sweating heavily, caption 'I have been running' (Present Perfect Continuous). Right panel: The same runner sitting on a bench at night, remembering the run, still looking tired, caption 'I had been running' (Past Perfect Continuous). 16-bit pixel art.";
+      } else {
+         prompt += "A funny situation showing the difference between two grammar tenses. 16-bit pixel art.";
+      }
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: prompt }] },
+      });
+      
       let imgUrl = null;
-      for (const part of response.candidates?.[0]?.content?.parts || []) { if (part.inlineData) { imgUrl = `data:image/png;base64,${part.inlineData.data}`; break; } }
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          imgUrl = `data:image/png;base64,${part.inlineData.data}`;
+          break;
+        }
+      }
       if (imgUrl) setComicUrl(imgUrl);
-    } catch (error) { alert("Error generating image."); } finally { setIsGeneratingComic(false); }
+    } catch (error) {
+       console.error(error);
+       alert("Error generating image. Check API Key.");
+    } finally {
+       setIsGeneratingComic(false);
+    }
   };
 
   const openContentEditor = (catId: string, topic: Topic) => { setTopicToEdit({ catId, topic }); setCurrentView('content-editor'); };
   const saveContentChanges = (updatedTopic: Topic) => {
     if (!topicToEdit) return;
-    setCategories(categories.map(c => c.id === topicToEdit.catId ? { ...c, topics: c.topics.map(t => t.id === updatedTopic.id ? updatedTopic : t) } : c));
+    setCategories(categories.map(c => {
+      if (c.id === topicToEdit.catId) return { ...c, topics: c.topics.map(t => t.id === updatedTopic.id ? updatedTopic : t) };
+      return c;
+    }));
     setTopicToEdit(null); setCurrentView('admin-dashboard');
   };
-  
   const addUser = () => { if (!newUserName.trim()) return; setUsers([...users, { id: Date.now().toString(), name: newUserName, username: newUserName.toLowerCase().replace(/\s/g, ''), role: newUserRole, xp: 0, league: 'Bronze', impactScore: 0, streakDays: 0, lastActivityDate: new Date().toISOString() }]); setNewUserName(''); };
-  const deleteUser = (id: string) => { if (confirm('Confirmar eliminación?')) setUsers(users.filter(u => u.id !== id)); };
+  const deleteUser = (id: string) => { if (confirm('¿Estás seguro de eliminar este usuario?')) setUsers(users.filter(u => u.id !== id)); };
   const addCategory = () => { if (!newCatTitle.trim()) return; setCategories([...categories, { id: `cat-${Date.now()}`, title: newCatTitle, description: 'Nueva carpeta', topics: [], color: 'bg-slate-500' }]); setNewCatTitle(''); };
-  const deleteCategory = (id: string) => { if (confirm('Confirmar eliminación?')) setCategories(categories.filter(c => c.id !== id)); };
+  const deleteCategory = (id: string) => { if (confirm('Se eliminarán todos los temas dentro de esta carpeta. ¿Continuar?')) setCategories(categories.filter(c => c.id !== id)); };
   const updateCategoryMeta = () => { if (!editingCatMeta) return; setCategories(categories.map(c => c.id === editingCatMeta.id ? { ...c, title: editingCatMeta.title, description: editingCatMeta.description } : c)); setEditingCatMeta(null); };
   
-  // --- DRAG AND DROP HANDLERS ---
+  // ROBUST DRAG AND DROP HANDLERS
   const handleDragStart = (e: React.DragEvent, topicId: string, sourceCatId: string) => {
     setDraggedTopic({ topicId, sourceCatId });
-    e.dataTransfer.setData("text/plain", topicId); // Required for Firefox
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ topicId, sourceCatId }));
   };
 
-  const handleDragOver = (e: React.DragEvent, zoneId: string) => {
+  const handleDragOver = (e: React.DragEvent, targetId: string, type: 'category' | 'group') => {
     e.preventDefault(); 
-    e.stopPropagation();
-    if (activeDropZone !== zoneId) {
-        setActiveDropZone(zoneId);
+    e.stopPropagation(); 
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverTarget?.id !== targetId) {
+      setDragOverTarget({ id: targetId, type });
     }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
   };
 
   const handleDrop = (e: React.DragEvent, targetCatId: string, targetGroup?: string) => {
     e.preventDefault();
-    e.stopPropagation();
-    setActiveDropZone(null);
+    e.stopPropagation(); 
+    setDragOverTarget(null);
+
     if (!draggedTopic) return;
 
-    setCategories(prevCats => {
-        // Deep clone to properly mutate
-        const newCats = prevCats.map(c => ({
-            ...c,
-            topics: c.topics.map(t => ({...t}))
-        }));
+    setCategories(prevCategories => {
+      const sourceCategory = prevCategories.find(c => c.id === draggedTopic.sourceCatId);
+      const topicToMove = sourceCategory?.topics.find(t => t.id === draggedTopic.topicId);
 
-        const sourceCat = newCats.find(c => c.id === draggedTopic.sourceCatId);
-        const targetCat = newCats.find(c => c.id === targetCatId);
+      if (!topicToMove) return prevCategories;
 
-        if (!sourceCat || !targetCat) return prevCats;
+      return prevCategories.map(cat => {
+        const newCat = { ...cat };
+        let newTopics = [...newCat.topics];
 
-        const topicIndex = sourceCat.topics.findIndex(t => t.id === draggedTopic.topicId);
-        if (topicIndex === -1) return prevCats;
+        if (newCat.id === draggedTopic.sourceCatId) {
+          newTopics = newTopics.filter(t => t.id !== draggedTopic.topicId);
+        }
 
-        const [topic] = sourceCat.topics.splice(topicIndex, 1);
-        
-        // Update group logic
-        if (targetGroup === 'ROOT') {
-            topic.group = undefined;
-        } else if (targetGroup) {
-            topic.group = targetGroup;
-        } 
-        // If targetGroup is undefined, we assume it's a category level drop (which we treat as ROOT usually, or we need precise zoning)
-        // In my render, I pass 'ROOT' explicitly for the root zone. 
-        // For dynamic "New Folder", I will pass the input value.
+        if (newCat.id === targetCatId) {
+          const updatedTopic = { ...topicToMove, group: targetGroup };
+          newTopics.push(updatedTopic);
+        }
 
-        targetCat.topics.push(topic);
-        
-        return newCats;
+        newCat.topics = newTopics;
+        return newCat;
+      });
     });
-    
+
     setDraggedTopic(null);
-    // Reset new folder logic if used
-    if (creatingFolderIn === targetCatId && targetGroup === newFolderName) {
-        setNewFolderName("");
-        setCreatingFolderIn(null);
-    }
   };
 
   const addTopic = (categoryId: string, groupName?: string) => { 
     if (!newTopicTitle.trim()) return; 
-    const newTopic: Topic = { id: `topic-${Date.now()}`, title: newTopicTitle, description: 'Pendiente', icon: 'BookOpen', group: groupName }; 
-    setCategories(categories.map(c => c.id === categoryId ? { ...c, topics: [...c.topics, newTopic] } : c)); 
-    setNewTopicTitle(''); setEditingCategoryId(null); 
+    const newTopic: Topic = { 
+      id: `topic-${Date.now()}`, 
+      title: newTopicTitle, 
+      description: 'Pendiente de contenido', 
+      icon: 'BookOpen',
+      group: groupName 
+    }; 
+    setCategories(categories.map(c => { 
+      if (c.id === categoryId) return { ...c, topics: [...c.topics, newTopic] }; 
+      return c; 
+    })); 
+    setNewTopicTitle(''); 
+    setEditingCategoryId(null); 
   };
-  const deleteTopic = (categoryId: string, topicId: string) => { if (confirm('Eliminar tema?')) setCategories(categories.map(c => c.id === categoryId ? { ...c, topics: c.topics.filter(t => t.id !== topicId) } : c)); };
 
-  // ... (Content Functions: prepareContent, startStudy, etc. - Kept Same)
-  const prepareContent = (topic: Topic) => { setTheoryContent(topic.manualTheory || "# Sin contenido\n\nEl profesor no ha añadido teoría."); };
-  const startStudy = (topic: Topic) => { setSelectedTopic(topic); setCurrentView('study'); startSessionTracking(); prepareContent(topic); };
-  const preparePractice = (topic: Topic) => { setSelectedTopic(topic); setCurrentView('practice-select'); };
-  const startPractice = (topic: Topic, idx?: number) => { setSelectedTopic(topic); setCurrentView('practice'); startSessionTracking(); setQuestions(topic.manualQuestions || []); };
-  const startExam = (topic: Topic) => { setSelectedTopic(topic); setCurrentView('exam'); startSessionTracking(); setQuestions(topic.manualQuestions || []); };
-  const handleAnswer = (ans: string) => { setUserAnswers({...userAnswers, [questions[currentQuestionIndex].id]: ans}); setShowFeedback(true); };
-  const finishExam = () => { endSessionTracking('practice'); setCurrentView('results'); setExamResult({ score: 5, total: 5, answers: [], xpEarned: 50, type: 'practice', timestamp: Date.now() }); };
+  const deleteTopic = (categoryId: string, topicId: string) => { if (confirm('¿Eliminar este tema?')) setCategories(categories.map(c => { if (c.id === categoryId) return { ...c, topics: c.topics.filter(t => t.id !== topicId) }; return c; })); };
 
-  // ... RENDERERS ...
-  const renderHeader = () => (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-lg bg-white/75 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {currentUser && <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"><Menu className="w-6 h-6" /></button>}
-          <div onClick={goHome} className="flex items-center gap-2 cursor-pointer font-bold text-xl tracking-tight text-slate-800 dark:text-white">Valen's <span className="text-blue-600 dark:text-blue-400">English Lab</span></div>
-        </div>
-        {currentUser && (
-          <div className="flex items-center gap-3">
-            <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">{darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
+  // ... (Content Loaders & Gameplay Logic)
+  const prepareContent = (topic: Topic) => {
+    if (topic.manualTheory && topic.manualTheory.trim().length > 0) {
+      setTheoryContent(topic.manualTheory);
+    } else {
+      setTheoryContent("# Próximamente\n\nEl profesor aún no ha añadido el contenido teórico para este tema.");
+    }
+  };
+
+  const startStudy = (topic: Topic) => {
+    setSelectedTopic(topic);
+    setCurrentView('study');
+    startSessionTracking();
+    prepareContent(topic);
+    setComicUrl(null);
+  };
+
+  const preparePractice = (topic: Topic) => {
+    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
+      alert("No hay ejercicios disponibles para este tema.");
+      return;
+    }
+    setSelectedTopic(topic);
+    setCurrentView('practice-select');
+  };
+
+  const startPractice = (topic: Topic, exerciseIndex?: number) => {
+    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
+      alert("No hay ejercicios disponibles para este tema.");
+      return;
+    }
+    setSelectedTopic(topic);
+    resetSession();
+    prepareContent(topic);
+    setCurrentView('practice');
+    startSessionTracking();
+
+    let qs: Question[] = [];
+    if (exerciseIndex !== undefined) {
+      setCurrentExerciseSet(exerciseIndex);
+      const start = exerciseIndex * 10;
+      qs = topic.manualQuestions.slice(start, start + 10);
+    } else {
+      qs = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+    }
+    setQuestions(qs);
+  };
+
+  const startExam = (topic: Topic) => {
+    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
+      alert("No hay examen disponible para este tema.");
+      return;
+    }
+    setSelectedTopic(topic);
+    resetSession();
+    setCurrentView('exam');
+    startSessionTracking();
+    const shuffled = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 20);
+    setQuestions(shuffled);
+  };
+
+  const handleAnswer = (answer: string) => {
+    const currentQ = questions[currentQuestionIndex];
+    setUserAnswers(prev => ({ ...prev, [currentQ.id]: answer }));
+    if (currentView === 'practice') {
+      setShowFeedback(true);
+    }
+  };
+
+  const goToQuestion = (index: number) => {
+    if (index < 0 || index >= questions.length) return;
+    setCurrentQuestionIndex(index);
+    const qId = questions[index].id;
+    const hasAnswered = !!userAnswers[qId];
+    if (currentView === 'practice') setShowFeedback(hasAnswered);
+  };
+
+  const nextQuestion = () => goToQuestion(currentQuestionIndex + 1);
+  const prevQuestion = () => goToQuestion(currentQuestionIndex - 1);
+
+  const finishExam = () => {
+    let duration = 0;
+    if (sessionStartTimeRef.current) {
+        duration = Math.round((Date.now() - sessionStartTimeRef.current) / 1000);
+    }
+
+    if (currentView === 'exam') {
+        endSessionTracking('exam');
+    } else if (currentView === 'practice') {
+        endSessionTracking('practice');
+        if (currentExerciseSet !== null && currentUser && selectedTopic) {
+            setCompletedExercises(prev => {
+              const userRecords = prev[currentUser.id] || {};
+              const topicRecords = userRecords[selectedTopic.id] || [];
+              if (!topicRecords.includes(currentExerciseSet)) {
+                 return { ...prev, [currentUser.id]: { ...userRecords, [selectedTopic.id]: [...topicRecords, currentExerciseSet] } };
+              }
+              return prev;
+            });
+        }
+    }
+    
+    let score = 0;
+    const mistakes: { questionText: string; userAnswer: string; correctAnswer: string }[] = [];
+    const results = questions.map(q => {
+      const selected = userAnswers[q.id] || "";
+      const cleanUser = normalizeAnswer(selected);
+      const cleanCorrect = normalizeAnswer(q.correctAnswer);
+      const isCorrect = cleanUser === cleanCorrect;
+      if (isCorrect) score++;
+      else mistakes.push({ questionText: q.text, userAnswer: selected, correctAnswer: q.correctAnswer });
+      return { questionId: q.id, questionText: q.text, selected, correct: q.correctAnswer, isCorrect, explanation: q.explanation };
+    });
+
+    // ANTI-CHEAT MECHANIC: Speed Check
+    const minSecondsPerQuestion = 3; 
+    const isFlaggedForSpeed = duration < (questions.length * minSecondsPerQuestion);
+    
+    let xpEarned = 0;
+    if (currentUser) {
+      const baseXP = 10;
+      let multiplier = 1.0;
+      
+      if (currentUser.streakDays > 5) multiplier += 0.2;
+      if (currentUser.streakDays > 10) multiplier += 0.5;
+
+      if (isFlaggedForSpeed) multiplier = 0.1; 
+
+      xpEarned = Math.floor(score * baseXP * multiplier);
+      
+      const updatedUser = { ...currentUser, xp: (currentUser.xp || 0) + xpEarned };
+      
+      const currentLeagueInfo = LEAGUES[updatedUser.league];
+      const nextLeague = Object.entries(LEAGUES).find(([_, info]: [string, any]) => info.minXP > currentLeagueInfo.minXP && updatedUser.xp >= info.minXP);
+      
+      if (nextLeague) {
+         updatedUser.league = nextLeague[0] as LeagueTier;
+      }
+
+      const updatedMissions = missions.map(m => {
+         if (m.id === 'm1' && currentView === 'practice') return { ...m, progress: Math.min(m.goal, m.progress + 1) };
+         if (m.id === 'm2' && currentView === 'exam' && score === questions.length) return { ...m, progress: 1 };
+         return m;
+      });
+      setMissions(updatedMissions);
+
+      setCurrentUser(updatedUser);
+      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+
+      const newProgress: UserProgress = {
+        userId: currentUser.id,
+        topicId: selectedTopic!.id,
+        score,
+        totalQuestions: questions.length,
+        timestamp: Date.now(),
+        mistakes,
+        type: currentView === 'exam' ? 'exam' : 'practice',
+        exerciseIndex: currentView === 'practice' ? currentExerciseSet! : undefined,
+        xpEarned
+      };
+      setProgressHistory(prev => [...prev, newProgress]);
+    }
+
+    setExamResult({ 
+      score, 
+      total: questions.length, 
+      answers: results, 
+      topicTitle: selectedTopic?.title, 
+      xpEarned, 
+      type: currentView === 'practice' ? 'practice' : 'exam', 
+      timestamp: Date.now(),
+      timeTakenSeconds: duration,
+      isFlaggedForSpeed
+    });
+    setCurrentView('results');
+  };
+
+  // --- RENDERERS ---
+
+  const renderLeaderboard = () => {
+    const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
+    const userRankIndex = sortedUsers.findIndex(u => u.id === currentUser?.id);
+    const currentLeagueData = LEAGUES[currentUser?.league || 'Bronze'];
+
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-1/3 space-y-6">
+             <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-t-8 ${currentLeagueData.color.split(' ')[0].replace('text-', 'border-')} p-6 text-center`}>
+                <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${currentLeagueData.color} bg-opacity-20`}>
+                   {getIcon(currentLeagueData.icon)}
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-wider">{currentUser?.league} League</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Season ends in 2 days</p>
+                <div className="bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 mb-2 overflow-hidden">
+                   <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '65%' }}></div>
+                </div>
+                <p className="text-xs text-slate-400">Top 10 promote to next tier</p>
+             </div>
+
+             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center gap-3 mb-2">
+                   <Flame className="w-6 h-6 text-orange-400 fill-orange-400 animate-pulse" />
+                   <h3 className="font-bold text-lg">Daily Streak</h3>
+                </div>
+                <div className="flex items-baseline gap-2">
+                   <span className="text-4xl font-black">{currentUser?.streakDays}</span>
+                   <span className="text-indigo-200">days</span>
+                </div>
+                <p className="text-xs text-indigo-200 mt-2">Keep it up! 2x XP Bonus active.</p>
+             </div>
           </div>
-        )}
+
+          <div className="w-full md:w-2/3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+             <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <h3 className="font-bold text-xl text-slate-800 dark:text-white">Global Ranking</h3>
+                <div className="flex gap-2">
+                   <button className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">This Week</button>
+                   <button className="px-3 py-1 text-xs font-bold text-slate-400 hover:text-slate-600">All Time</button>
+                </div>
+             </div>
+             <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {sortedUsers.map((u, idx) => (
+                   <div key={u.id} className={`p-4 flex items-center gap-4 ${u.id === currentUser?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                      <div className="w-8 text-center font-bold text-slate-400 text-lg">
+                         {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-teal-400 flex items-center justify-center text-white font-bold">
+                         {u.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                         <p className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            {u.name}
+                            {u.role === 'admin' && <Shield className="w-3 h-3 text-blue-500 fill-blue-500"/>}
+                         </p>
+                         <p className="text-xs text-slate-500 dark:text-slate-400">{u.league} League • {u.impactScore} Impact</p>
+                      </div>
+                      <div className="text-right">
+                         <span className="block font-black text-slate-800 dark:text-white">{u.xp} XP</span>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </div>
+
+        <div className="mt-12">
+           <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+              <Target className="w-6 h-6 text-red-500"/> Active Missions
+           </h3>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {missions.map(mission => (
+                 <div key={mission.id} className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                       {getIcon(mission.icon)}
+                    </div>
+                    <div className="flex justify-between items-start mb-2">
+                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${mission.type === 'daily' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                          {mission.type}
+                       </span>
+                       <span className="text-xs font-bold text-amber-500 flex items-center gap-1">
+                          <Zap className="w-3 h-3"/> +{mission.xpReward} XP
+                       </span>
+                    </div>
+                    <h4 className="font-bold text-slate-800 dark:text-white mb-1">{mission.title}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{mission.description}</p>
+                    
+                    <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                       <div 
+                          className="bg-blue-500 h-full transition-all duration-500" 
+                          style={{ width: `${(mission.progress / mission.goal) * 100}%` }}
+                       ></div>
+                    </div>
+                    <div className="text-right mt-1 text-xs font-medium text-slate-400">
+                       {mission.progress} / {mission.goal}
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </div>
       </div>
-    </header>
-  );
+    );
+  };
+
+  const renderHeader = () => {
+    if (currentView === 'login') return null;
+    const currentXP = currentUser?.xp || 0;
+    const level = calculateLevel(currentXP);
+    const title = getUserTitle(level);
+
+    return (
+      <header className="sticky top-0 z-40 w-full backdrop-blur-lg bg-white/75 dark:bg-slate-900/75 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {currentUser && (
+              <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
+            <div onClick={goHome} className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative bg-gradient-to-br from-blue-600 to-violet-600 p-2 rounded-xl shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                <FlaskConical className="text-white w-6 h-6" />
+                <div className="absolute -top-1.5 -right-1.5 bg-white dark:bg-slate-800 rounded-full p-0.5 border-2 border-slate-100 dark:border-slate-900 shadow-sm">
+                    <MessageCircle className="w-3 h-3 text-violet-600 dark:text-violet-400" />
+                </div>
+              </div>
+              <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white hidden sm:block">Valen's <span className="text-blue-600 dark:text-blue-400">English Lab</span></span>
+            </div>
+          </div>
+
+          {currentUser && (
+            <div className="flex items-center gap-3 sm:gap-6">
+              {currentUser.role === 'student' && (
+                <div className="hidden md:flex flex-col items-end cursor-pointer" onClick={() => setCurrentView('leaderboard')}>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1">
+                    {title}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Level {level} • {currentUser.league} League</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-700/50 shadow-sm cursor-pointer hover:scale-105 transition-transform" onClick={() => setCurrentView('leaderboard')}>
+                 <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                 <span className="text-sm font-bold text-amber-800 dark:text-amber-300">{currentUser.xp || 0} XP</span>
+              </div>
+
+              <button 
+                onClick={() => setDarkMode(!darkMode)} 
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+    );
+  };
 
   const renderSidebar = () => (
     <>
-      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center"><h2 className="font-bold text-xl dark:text-white">Menu</h2><button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-slate-500" /></button></div>
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)} />}
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+           <h2 className="font-bold text-xl text-slate-800 dark:text-white">Menu</h2>
+           <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-5 h-5 text-slate-500" /></button>
+        </div>
         <div className="p-4 space-y-2">
-           <button onClick={() => { goHome(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"><Home className="w-5 h-5"/> Home</button>
-           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600"><LogOut className="w-5 h-5"/> Logout</button>
+           <button onClick={() => { goHome(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+             <Home className="w-5 h-5"/> Home
+           </button>
+           {currentUser?.role === 'student' && (
+             <>
+               <button onClick={() => { setCurrentView('student-progress'); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+                 <BarChart className="w-5 h-5"/> My Progress
+               </button>
+               <button onClick={() => { setCurrentView('leaderboard'); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+                 <Trophy className="w-5 h-5"/> Leaderboard
+               </button>
+             </>
+           )}
+           <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
+           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium">
+             <LogOut className="w-5 h-5"/> Logout
+           </button>
+        </div>
+        <div className="absolute bottom-0 w-full p-6 border-t border-slate-100 dark:border-slate-800">
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
+                {currentUser?.name.charAt(0)}
+              </div>
+              <div>
+                 <p className="font-bold text-sm text-slate-800 dark:text-white">{currentUser?.name}</p>
+                 <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{currentUser?.role}</p>
+              </div>
+           </div>
         </div>
       </div>
     </>
   );
 
+  const renderDashboard = () => (
+    <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="mb-12 text-center animate-fade-in-up">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-4 tracking-tight">
+          Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">{currentUser?.name}</span> 👋
+        </h1>
+        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Ready to grind? Select a category to boost your XP.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {categories.map((category) => (
+          <div 
+            key={category.id}
+            onClick={() => selectCategory(category)}
+            className="group relative bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer overflow-hidden border border-slate-100 dark:border-slate-700/50"
+          >
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${category.color.replace('bg-', 'from-').replace('500', '400')} to-transparent opacity-10 rounded-bl-[100px] group-hover:scale-110 transition-transform duration-500`}></div>
+            
+            <div className={`${category.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform duration-300`}>
+               <Layout className="text-white w-8 h-8" />
+            </div>
+            
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{category.title}</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 leading-relaxed">{category.description}</p>
+            
+            <div className="flex items-center justify-between mt-auto">
+               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{category.topics.length} Topics</span>
+               <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                  <ChevronRight className="w-5 h-5"/>
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderAdminDashboard = () => (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold dark:text-white">Panel de Profesor</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Panel de Profesor</h1>
+          <p className="text-slate-500 dark:text-slate-400">Gestiona estudiantes y contenido del curso.</p>
+        </div>
+        <div className="flex gap-3">
            <Button variant="outline" onClick={() => setCurrentView('dashboard')}>Ver como Alumno</Button>
-           <button onClick={() => setAdminTab('resources')} className={`px-4 py-2 rounded-md font-medium ${adminTab === 'resources' ? 'bg-blue-100 text-blue-700' : 'text-slate-600'}`}>Contenido</button>
+           <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+             <button onClick={() => setAdminTab('users')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'users' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Estudiantes</button>
+             <button onClick={() => setAdminTab('resources')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'resources' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Contenido</button>
+             <button onClick={() => setAdminTab('analytics')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'analytics' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Analíticas</button>
+           </div>
         </div>
       </div>
 
+      {adminTab === 'users' && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+           <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between gap-4">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-white">Usuarios Registrados</h3>
+              <div className="flex gap-2">
+                 <input 
+                   placeholder="Nombre usuario..." 
+                   className="px-3 py-2 border rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                   value={newUserName}
+                   onChange={e => setNewUserName(e.target.value)}
+                 />
+                 <select 
+                   className="px-3 py-2 border rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                   value={newUserRole}
+                   onChange={e => setNewUserRole(e.target.value as Role)}
+                 >
+                   <option value="student">Estudiante</option>
+                   <option value="admin">Profesor</option>
+                 </select>
+                 <Button onClick={addUser} size="sm"><Plus className="w-4 h-4 mr-1 inline" /> Añadir</Button>
+              </div>
+           </div>
+           <div className="divide-y divide-slate-100 dark:divide-slate-700">
+              {users.map(u => (
+                <div key={u.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                   <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${u.role === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}`}>
+                        {u.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-white">{u.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">@{u.username} • {u.role === 'admin' ? 'Admin' : 'Estudiante'} • {u.xp || 0} XP</p>
+                      </div>
+                   </div>
+                   {u.id !== currentUser?.id && (
+                     <button onClick={() => deleteUser(u.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 className="w-4 h-4" /></button>
+                   )}
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
       {adminTab === 'resources' && (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-in fade-in">
            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-lg dark:text-white">Estructura del Curso (Drag & Drop)</h3>
-                <div className="flex gap-2">
-                   <input placeholder="Nueva Categoría..." className="px-3 py-1 border rounded text-sm dark:bg-slate-900 dark:text-white" value={newCatTitle} onChange={e => setNewCatTitle(e.target.value)} />
-                   <Button onClick={addCategory} size="sm"><FolderPlus className="w-4 h-4 mr-2 inline"/> Crear</Button>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white">Estructura del Curso</h3>
+                <div className="flex items-center gap-4">
+                  <div className="text-xs text-slate-500">Arrastra los temas para moverlos entre carpetas</div>
+                  <div className="flex gap-2">
+                      <input 
+                        placeholder="Nueva Categoría..." 
+                        className="px-3 py-1 border rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600 dark:text-white"
+                        value={newCatTitle}
+                        onChange={e => setNewCatTitle(e.target.value)}
+                      />
+                      <Button onClick={addCategory} size="sm"><FolderPlus className="w-4 h-4 mr-2 inline"/> Crear</Button>
+                  </div>
                 </div>
              </div>
              
@@ -504,86 +1193,141 @@ export default function App() {
                 {categories.map(cat => {
                   const groups: Record<string, Topic[]> = {};
                   const rootTopics: Topic[] = [];
-                  cat.topics.forEach(t => { if (t.group) { if (!groups[t.group]) groups[t.group] = []; groups[t.group].push(t); } else { rootTopics.push(t); } });
+                  cat.topics.forEach(t => {
+                    if (t.group) {
+                      if (!groups[t.group]) groups[t.group] = [];
+                      groups[t.group].push(t);
+                    } else {
+                      rootTopics.push(t);
+                    }
+                  });
 
                   return (
-                    <div key={cat.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                    <div 
+                      key={cat.id} 
+                      className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden transition-colors"
+                    >
                        <div 
-                          className={`bg-slate-50 dark:bg-slate-700/50 p-4 flex justify-between items-center`}
+                          className={`bg-slate-50 dark:bg-slate-700/50 p-4 flex items-center justify-between group/header ${dragOverTarget?.id === cat.id ? 'ring-2 ring-blue-500 ring-inset' : ''}`}
+                          onDragOver={(e) => handleDragOver(e, cat.id, 'category')}
+                          onDrop={(e) => handleDrop(e, cat.id, undefined)} 
+                          onDragLeave={handleDragLeave}
                        >
-                          <h4 className="font-bold dark:text-white flex gap-2"><Layout className="w-4 h-4"/> {cat.title}</h4>
-                          <button onClick={() => deleteCategory(cat.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>
+                          <div className="flex items-center gap-3">
+                             <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Layout className="w-4 h-4 text-slate-400"/> {cat.title}</h4>
+                             <p className="text-xs text-slate-500 hidden sm:block">({cat.topics.length} temas)</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <button onClick={() => deleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                          </div>
                        </div>
 
                        <div className="p-4 bg-white dark:bg-slate-800 space-y-4">
-                          {/* Folder Creation Zone */}
-                          {creatingFolderIn === cat.id ? (
-                             <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 animate-in fade-in">
-                                <Folder className="w-5 h-5 text-amber-500"/>
-                                <input autoFocus placeholder="Nombre de carpeta..." className="flex-1 bg-transparent text-sm outline-none dark:text-white" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} />
-                                <div 
-                                  className={`text-xs text-amber-600 dark:text-amber-400 px-2 py-1 bg-amber-100 dark:bg-amber-900/40 rounded border border-dashed border-amber-300 ${activeDropZone === `new-folder-${cat.id}` ? 'ring-2 ring-amber-500' : ''}`}
-                                  onDragOver={(e) => handleDragOver(e, `new-folder-${cat.id}`)}
-                                  onDrop={(e) => handleDrop(e, cat.id, newFolderName)}
-                                >
-                                  Arrastra aquí un tema para crear
-                                </div>
-                                <button onClick={() => setCreatingFolderIn(null)}><X className="w-4 h-4"/></button>
+                          {creatingFolderIn === cat.id && (
+                             <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                <FolderOpen className="w-4 h-4 text-blue-500"/>
+                                <input 
+                                  autoFocus 
+                                  placeholder="Nombre de la carpeta..." 
+                                  className="flex-1 bg-transparent text-sm outline-none text-slate-800 dark:text-white"
+                                  value={newFolderName}
+                                  onChange={e => setNewFolderName(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && newFolderName.trim()) {
+                                       setEditingCategoryId(cat.id);
+                                       setCreatingFolderIn(null);
+                                    }
+                                  }}
+                                />
+                                <button onClick={() => setCreatingFolderIn(null)}><X className="w-4 h-4 text-slate-400"/></button>
                              </div>
-                          ) : (
-                             <button onClick={() => { setCreatingFolderIn(cat.id); setNewFolderName(''); }} className="text-xs flex items-center gap-1 text-slate-500 hover:text-blue-500 font-medium">
-                                <FolderPlus className="w-3 h-3"/> Nueva Carpeta
-                             </button>
                           )}
 
-                          {/* Existing Folders */}
                           {Object.keys(groups).map(groupName => (
                              <div 
                                 key={groupName} 
-                                className={`border rounded-lg p-3 transition-colors ${activeDropZone === `${cat.id}-${groupName}` ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50'}`}
-                                onDragOver={(e) => handleDragOver(e, `${cat.id}-${groupName}`)}
+                                className={`border-l-4 pl-4 ml-1 rounded-r-lg transition-all duration-200 ${dragOverTarget?.id === `${cat.id}-${groupName}` ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-inner' : 'border-slate-200 dark:border-slate-700'}`}
+                                onDragOver={(e) => handleDragOver(e, `${cat.id}-${groupName}`, 'group')}
                                 onDrop={(e) => handleDrop(e, cat.id, groupName)}
+                                onDragLeave={handleDragLeave}
                              >
-                                <h5 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2"><FolderOpen className="w-4 h-4"/> {groupName}</h5>
-                                <div className="space-y-2 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                                <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2 py-2">
+                                   <FolderOpen className={`w-4 h-4 ${dragOverTarget?.id === `${cat.id}-${groupName}` ? 'text-blue-500' : 'text-slate-400'}`}/> 
+                                   {groupName}
+                                </h5>
+                                <div className="space-y-2">
                                    {groups[groupName].map(topic => (
-                                      <div key={topic.id} draggable onDragStart={(e) => handleDragStart(e, topic.id, cat.id)} className="flex justify-between items-center p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400">
-                                         <div className="flex items-center gap-2"><GripVertical className="w-4 h-4 text-slate-300"/><span className="text-sm font-medium dark:text-white">{topic.title}</span></div>
-                                         <div className="flex gap-1"><button onClick={() => openContentEditor(cat.id, topic)} className="text-blue-400 hover:text-blue-600"><FileEdit className="w-3 h-3"/></button><button onClick={() => deleteTopic(cat.id, topic.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3"/></button></div>
+                                      <div 
+                                        key={topic.id} 
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, topic.id, cat.id)}
+                                        className="flex items-center justify-between p-2 border rounded bg-white dark:bg-slate-800/50 hover:border-blue-300 dark:hover:border-blue-700 cursor-grab active:cursor-grabbing shadow-sm"
+                                      >
+                                         <div className="flex items-center gap-2">
+                                            <GripVertical className="w-4 h-4 text-slate-300"/>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
+                                         </div>
+                                         <div className="flex gap-1">
+                                            <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400"><FileEdit className="w-3 h-3"/></button>
+                                            <button onClick={() => deleteTopic(cat.id, topic.id)} className="p-1 text-red-400"><Trash2 className="w-3 h-3"/></button>
+                                         </div>
                                       </div>
                                    ))}
                                 </div>
                              </div>
                           ))}
 
-                          {/* Root Topics Zone */}
                           <div 
-                             className={`space-y-2 min-h-[3rem] p-2 rounded-lg border-2 border-dashed transition-colors ${activeDropZone === `${cat.id}-ROOT` ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/10' : 'border-transparent'}`}
-                             onDragOver={(e) => handleDragOver(e, `${cat.id}-ROOT`)}
-                             onDrop={(e) => handleDrop(e, cat.id, 'ROOT')}
+                             className={`space-y-2 min-h-[3rem] p-2 rounded-lg border-2 border-dashed border-transparent transition-all ${dragOverTarget?.id === cat.id ? 'border-blue-300 bg-blue-50/50' : ''}`}
+                             onDragOver={(e) => handleDragOver(e, cat.id, 'category')}
+                             onDrop={(e) => handleDrop(e, cat.id, undefined)}
                           >
                              {rootTopics.map(topic => (
-                                <div key={topic.id} draggable onDragStart={(e) => handleDragStart(e, topic.id, cat.id)} className="flex justify-between items-center p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400">
-                                   <div className="flex items-center gap-2"><GripVertical className="w-4 h-4 text-slate-300"/><span className="text-sm font-medium dark:text-white">{topic.title}</span></div>
-                                   <div className="flex gap-1"><button onClick={() => openContentEditor(cat.id, topic)} className="text-blue-400 hover:text-blue-600"><FileEdit className="w-3 h-3"/></button><button onClick={() => deleteTopic(cat.id, topic.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3"/></button></div>
+                                <div 
+                                  key={topic.id} 
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, topic.id, cat.id)}
+                                  className="flex items-center justify-between p-2 border rounded bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-700 cursor-grab active:cursor-grabbing shadow-sm"
+                                >
+                                   <div className="flex items-center gap-2">
+                                      <GripVertical className="w-4 h-4 text-slate-300"/>
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
+                                   </div>
+                                   <div className="flex gap-1">
+                                      <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400"><FileEdit className="w-3 h-3"/></button>
+                                      <button onClick={() => deleteTopic(cat.id, topic.id)} className="p-1 text-red-400"><Trash2 className="w-3 h-3"/></button>
+                                   </div>
                                 </div>
                              ))}
-                             {rootTopics.length === 0 && Object.keys(groups).length === 0 && <div className="text-xs text-slate-400 italic text-center">Arrastra temas aquí</div>}
+                             {rootTopics.length === 0 && Object.keys(groups).length === 0 && (
+                                <div className="text-xs text-slate-400 italic text-center">Arrastra temas aquí</div>
+                             )}
                           </div>
 
-                          {/* Add Topic */}
                           {editingCategoryId === cat.id ? (
                              <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-900 rounded-lg">
-                               <p className="text-xs font-bold text-slate-500 mb-2">Nuevo Tema</p>
+                               <p className="text-xs font-bold text-slate-500 mb-2">Nuevo Tema {newFolderName ? `en ${newFolderName}` : ''}</p>
                                <div className="flex gap-2 items-center">
-                                 <input autoFocus placeholder="Título..." className="flex-1 px-3 py-2 border rounded text-sm dark:bg-slate-800 dark:text-white" value={newTopicTitle} onChange={e => setNewTopicTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTopic(cat.id, creatingFolderIn === cat.id ? newFolderName : undefined)} />
-                                 <Button size="sm" onClick={() => addTopic(cat.id, creatingFolderIn === cat.id ? newFolderName : undefined)}>Guardar</Button>
+                                 <input 
+                                   autoFocus
+                                   placeholder="Título del tema..." 
+                                   className="flex-1 px-3 py-2 border rounded text-sm dark:bg-slate-800 dark:text-white"
+                                   value={newTopicTitle}
+                                   onChange={e => setNewTopicTitle(e.target.value)}
+                                   onKeyDown={e => e.key === 'Enter' && addTopic(cat.id, newFolderName || undefined)}
+                                 />
+                                 <Button size="sm" onClick={() => addTopic(cat.id, newFolderName || undefined)}>Guardar</Button>
                                  <button onClick={() => { setEditingCategoryId(null); setNewFolderName(''); }}><X className="w-5 h-5 text-slate-400"/></button>
                                </div>
                              </div>
                           ) : (
                              <div className="flex gap-4 mt-2">
-                                <button onClick={() => { setEditingCategoryId(cat.id); setNewFolderName(''); }} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1"><Plus className="w-4 h-4"/> Añadir Tema</button>
+                                <button onClick={() => { setEditingCategoryId(cat.id); setNewFolderName(''); }} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+                                  <Plus className="w-4 h-4"/> Añadir Tema
+                                </button>
+                                <button onClick={() => setCreatingFolderIn(cat.id)} className="text-sm text-slate-500 font-medium flex items-center gap-1">
+                                  <FolderPlus className="w-4 h-4"/> Nueva Carpeta
+                                </button>
                              </div>
                           )}
                        </div>
@@ -594,60 +1338,224 @@ export default function App() {
            </div>
         </div>
       )}
+      
+      {adminTab === 'analytics' && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+           <h3 className="font-bold text-lg mb-6 text-slate-800 dark:text-white">Progreso de Estudiantes</h3>
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {users.filter(u => u.role === 'student').map(student => (
+                <div key={student.id} className="p-4 border rounded-xl hover:border-blue-400 transition-colors cursor-pointer" onClick={() => { setAnalyticsStudentId(student.id); setCurrentView('student-progress'); }}>
+                   <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">{student.name.charAt(0)}</div>
+                      <div>
+                        <p className="font-bold text-slate-800 dark:text-white">{student.name}</p>
+                        <p className="text-xs text-slate-500">{student.xp || 0} XP</p>
+                      </div>
+                   </div>
+                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-blue-500 h-full" style={{ width: `${Math.min(100, (student.xp || 0) / 10)}%` }}></div>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
     </div>
   );
 
-  const renderDashboard = () => (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-extrabold text-slate-800 dark:text-white mb-4">Hello, {currentUser?.name} 👋</h1>
-        <p className="text-slate-600 dark:text-slate-400">Ready to grind? Select a category.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {categories.map((category) => (
-          <div key={category.id} onClick={() => selectCategory(category)} className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700">
-            <div className={`${category.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-white`}><Layout className="w-8 h-8" /></div>
-            <h3 className="text-2xl font-bold dark:text-white mb-2">{category.title}</h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">{category.description}</p>
-            <div className="flex justify-between items-center"><span className="text-xs font-bold uppercase text-slate-400">{category.topics.length} Topics</span><ChevronRight className="w-5 h-5 text-slate-400"/></div>
+  const renderStudentProgress = () => {
+    const targetId = (currentUser?.role === 'admin' && analyticsStudentId) ? analyticsStudentId : currentUser?.id;
+    if (!targetId) return <div>Error: Usuario no identificado</div>;
+
+    const studentData = users.find(u => u.id === targetId);
+    const history = progressHistory.filter(p => p.userId === targetId).sort((a, b) => b.timestamp - a.timestamp);
+    
+    const totalPractice = history.filter(h => h.type === 'practice').length;
+    const totalExams = history.filter(h => h.type === 'exam').length;
+    const avgScore = history.length > 0 ? (history.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / history.length) * 100 : 0;
+    
+    return (
+       <div className="max-w-5xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-8">
+             <button onClick={() => currentUser?.role === 'admin' ? setCurrentView('admin-dashboard') : setCurrentView('dashboard')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                <ChevronLeft className="w-6 h-6 text-slate-600 dark:text-slate-400"/>
+             </button>
+             <div>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{currentUser?.role === 'admin' ? `Progreso de ${studentData?.name}` : 'Mi Progreso'}</h1>
+                <p className="text-slate-500 dark:text-slate-400">Estadísticas y resultados recientes</p>
+             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><Brain className="w-6 h-6"/></div>
+                   <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Ejercicios</p>
+                      <p className="text-2xl font-bold text-slate-800 dark:text-white">{totalPractice}</p>
+                   </div>
+                </div>
+             </div>
+             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg"><CheckCircle className="w-6 h-6"/></div>
+                   <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Exámenes</p>
+                      <p className="text-2xl font-bold text-slate-800 dark:text-white">{totalExams}</p>
+                   </div>
+                </div>
+             </div>
+             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-lg"><Trophy className="w-6 h-6"/></div>
+                   <div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Precisión Media</p>
+                      <p className="text-2xl font-bold text-slate-800 dark:text-white">{Math.round(avgScore)}%</p>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+             <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white">Historial de Actividad</h3>
+             </div>
+             <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {history.length === 0 ? (
+                   <div className="p-8 text-center text-slate-500">No hay actividad registrada.</div>
+                ) : (
+                   history.map((item, idx) => {
+                      let topicName = item.topicId;
+                      for(const c of categories) {
+                         const t = c.topics.find(t => t.id === item.topicId);
+                         if (t) { topicName = t.title; break; }
+                      }
+
+                      return (
+                         <div key={idx} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                            <div>
+                               <p className="font-medium text-slate-800 dark:text-white">{topicName}</p>
+                               <p className="text-xs text-slate-500 capitalize">{item.type === 'exam' ? 'Examen Oficial' : `Práctica ${item.exerciseIndex !== undefined ? item.exerciseIndex + 1 : ''}`}</p>
+                            </div>
+                            <div className="flex items-center gap-6">
+                               <div className="text-right">
+                                  <span className={`text-lg font-bold ${(item.score / item.totalQuestions) >= 0.7 ? 'text-green-500' : 'text-orange-500'}`}>
+                                     {Math.round((item.score / item.totalQuestions) * 100)}%
+                                  </span>
+                                  <p className="text-xs text-slate-400">{item.score}/{item.totalQuestions}</p>
+                               </div>
+                               <div className="text-xs text-slate-400 w-24 text-right">
+                                  {new Date(item.timestamp).toLocaleDateString()}
+                               </div>
+                            </div>
+                         </div>
+                      );
+                   })
+                )}
+             </div>
+          </div>
+       </div>
+    );
+  };
 
   const renderTopicDetail = () => {
     if (!selectedCategory) return null;
+
     const groups: Record<string, Topic[]> = {};
     const rootTopics: Topic[] = [];
-    selectedCategory.topics.forEach(t => { if(t.group) { if(!groups[t.group]) groups[t.group] = []; groups[t.group].push(t); } else { rootTopics.push(t); }});
+    selectedCategory.topics.forEach(t => {
+      if (t.group) {
+        if (!groups[t.group]) groups[t.group] = [];
+        groups[t.group].push(t);
+      } else {
+        rootTopics.push(t);
+      }
+    });
 
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <button onClick={() => setCurrentView('dashboard')} className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-6"><ChevronLeft className="w-5 h-5 mr-1" /> Volver</button>
-        <h1 className="text-3xl font-bold dark:text-white mb-8">{selectedCategory.title}</h1>
-        
-        {Object.keys(groups).map(groupName => (
-           <div key={groupName} className="mb-8">
-              <h3 className="flex items-center gap-2 text-xl font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2 mb-4"><FolderOpen className="w-5 h-5 text-blue-500"/> {groupName}</h3>
-              <div className="grid gap-4">
-                 {groups[groupName].map(topic => (
-                    <div key={topic.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                       <div><h3 className="font-bold dark:text-white">{topic.title}</h3><p className="text-sm text-slate-500">{topic.description}</p></div>
-                       <div className="flex gap-2"><Button size="sm" onClick={() => startStudy(topic)}>Estudiar</Button><Button size="sm" variant="outline" onClick={() => preparePractice(topic)}>Practicar</Button></div>
-                    </div>
-                 ))}
-              </div>
-           </div>
-        ))}
+        <button 
+          onClick={() => { setSelectedCategory(null); setCurrentView('dashboard'); }}
+          className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" /> Volver a Categorías
+        </button>
 
-        <div className="grid gap-4">
-           {rootTopics.map(topic => (
-              <div key={topic.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                 <div><h3 className="font-bold dark:text-white">{topic.title}</h3><p className="text-sm text-slate-500">{topic.description}</p></div>
-                 <div className="flex gap-2"><Button size="sm" onClick={() => startStudy(topic)}>Estudiar</Button><Button size="sm" variant="outline" onClick={() => preparePractice(topic)}>Practicar</Button></div>
-              </div>
-           ))}
+        <div className="mb-8 text-center">
+          <div className={`inline-flex p-4 rounded-2xl ${selectedCategory.color} mb-4 shadow-lg shadow-blue-500/20`}>
+             <Layout className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{selectedCategory.title}</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">{selectedCategory.description}</p>
+        </div>
+
+        <div className="space-y-8">
+          {Object.keys(groups).map(groupName => (
+             <div key={groupName} className="space-y-4">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
+                   <FolderOpen className="w-5 h-5 text-blue-500"/> {groupName}
+                </h3>
+                <div className="grid gap-4">
+                   {groups[groupName].map(topic => (
+                      <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                           <div className="flex items-center gap-4 w-full">
+                              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
+                                {getIcon(topic.icon)}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{topic.description}</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                              <Button variant="secondary" size="sm" onClick={() => startStudy(topic)} className="flex-1 sm:flex-none justify-center">Estudiar</Button>
+                              <Button variant="outline" size="sm" onClick={() => preparePractice(topic)} className="flex-1 sm:flex-none justify-center">Practicar</Button>
+                           </div>
+                        </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          ))}
+
+          {rootTopics.length > 0 && (
+             <div className="space-y-4">
+                {Object.keys(groups).length > 0 && (
+                   <h3 className="flex items-center gap-2 text-xl font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
+                      <FileText className="w-5 h-5 text-slate-500"/> Temas Generales
+                   </h3>
+                )}
+                <div className="grid gap-4">
+                  {rootTopics.map(topic => (
+                      <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                           <div className="flex items-center gap-4 w-full">
+                              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
+                                {getIcon(topic.icon)}
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{topic.description}</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                              <Button variant="secondary" size="sm" onClick={() => startStudy(topic)} className="flex-1 sm:flex-none justify-center">Estudiar</Button>
+                              <Button variant="outline" size="sm" onClick={() => preparePractice(topic)} className="flex-1 sm:flex-none justify-center">Practicar</Button>
+                           </div>
+                        </div>
+                      </div>
+                  ))}
+                </div>
+             </div>
+          )}
+
+          {selectedCategory.topics.length === 0 && (
+             <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+               <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3"/>
+               <p className="text-slate-500 dark:text-slate-400">No hay temas en esta categoría aún.</p>
+             </div>
+          )}
         </div>
       </div>
     );
@@ -660,99 +1568,119 @@ export default function App() {
     const userCompleted = (currentUser && completedExercises[currentUser.id]?.[selectedTopic.id]) || [];
     const isBossUnlocked = exercisesCount > 0 && userCompleted.length === exercisesCount;
 
+    const getBestScore = (idx: number) => {
+      if (!currentUser) return 0;
+      const attempts = progressHistory.filter(p => p.userId === currentUser.id && p.topicId === selectedTopic.id && p.type === 'practice' && p.exerciseIndex === idx);
+      if (attempts.length === 0) return 0;
+      const best = attempts.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+      return best.score;
+    };
+
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <button onClick={() => setCurrentView('topic-detail')} className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"><ChevronLeft className="w-5 h-5 mr-1" /> Volver</button>
-          <div className="text-right"><h2 className="text-2xl font-bold text-slate-800 dark:text-white">{selectedTopic.title}</h2><p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona un nivel</p></div>
+          <button 
+            onClick={() => setCurrentView('topic-detail')}
+            className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" /> Volver
+          </button>
+          <div className="text-right">
+             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{selectedTopic.title}</h2>
+             <p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona un nivel de práctica</p>
+          </div>
         </div>
+
         {exercisesCount > 0 ? (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: exercisesCount }).map((_, idx) => {
                 const isCompleted = userCompleted.includes(idx);
+                const bestScore = getBestScore(idx);
+                const pct = (bestScore / 10) * 100;
+                const rank = getRank(pct);
+                const RankIcon = rank.icon;
+                
                 return (
-                  <div key={idx} onClick={() => startPractice(selectedTopic, idx)} className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group ${isCompleted ? 'bg-white dark:bg-slate-800 ring-2 ring-emerald-500/50' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}>
-                    <div className="flex justify-between items-start mb-6"><div className={`p-4 rounded-xl ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}><Brain className="w-8 h-8"/></div></div>
-                    <div><h3 className="text-xl font-bold dark:text-white mb-1">Práctica {idx + 1}</h3><p className="text-slate-500 dark:text-slate-400 text-sm">10 Preguntas</p></div>
+                  <div 
+                    key={idx}
+                    onClick={() => startPractice(selectedTopic, idx)}
+                    className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group ${isCompleted ? 'bg-white dark:bg-slate-800 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/10' : 'bg-white dark:bg-slate-800 hover:shadow-xl border border-slate-200 dark:border-slate-700'}`}
+                  >
+                    {isCompleted && (
+                      <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+                        COMPLETADO
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-start mb-6">
+                      <div className={`p-4 rounded-xl ${isCompleted ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'} transition-colors`}>
+                        <Brain className="w-8 h-8"/>
+                      </div>
+                      {isCompleted ? (
+                         <div className={`flex flex-col items-end`}>
+                            <div className={`p-2 rounded-full mb-1 ${rank.color} border-2`}>
+                               <RankIcon className="w-5 h-5"/>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rank.name}</span>
+                         </div>
+                      ) : (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 flex items-center gap-1 text-xs font-bold uppercase tracking-wider">
+                           Empezar <ChevronRight className="w-4 h-4"/>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        Práctica {idx + 1}
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">10 Preguntas de entrenamiento</p>
+                      
+                      {isCompleted && (
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                           <div 
+                             className={`h-full rounded-full ${pct >= 70 ? 'bg-emerald-500' : 'bg-orange-500'}`} 
+                             style={{ width: `${pct}%` }}
+                           ></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
-            {isBossUnlocked && <div className="p-8 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl text-white flex justify-between items-center cursor-pointer hover:scale-[1.01] transition-transform" onClick={() => startExam(selectedTopic)}><div><h3 className="text-2xl font-bold mb-1">EXAMEN FINAL</h3><p className="text-indigo-200">Demuestra tu maestría.</p></div><Button className="bg-white text-indigo-900">Comenzar</Button></div>}
+
+            {/* Boss Challenge Unlock */}
+            {isBossUnlocked && (
+               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-1 shadow-2xl transform hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => startExam(selectedTopic)}>
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                  <div className="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                     <div className="flex items-center gap-6">
+                       <div className="p-4 bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-2xl shadow-lg animate-pulse">
+                          <Zap className="w-8 h-8" />
+                       </div>
+                       <div>
+                          <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 mb-1">DESAFÍO FINAL DESBLOQUEADO</h3>
+                          <p className="text-slate-600 dark:text-slate-300">Demuestra tu maestría en el Examen Oficial.</p>
+                       </div>
+                     </div>
+                     <Button className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-100 whitespace-nowrap">
+                        Comenzar Examen
+                     </Button>
+                  </div>
+               </div>
+            )}
           </div>
         ) : (
-          <div className="text-center py-16"><p className="text-slate-500">No hay ejercicios aún.</p></div>
+          <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+             <div className="bg-slate-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Brain className="w-8 h-8 text-slate-400" />
+             </div>
+             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No hay ejercicios</h3>
+             <p className="text-slate-500 dark:text-slate-400">El profesor aún no ha añadido prácticas para este tema.</p>
+          </div>
         )}
-      </div>
-    );
-  };
-
-  const renderQuestionCard = (isExam: boolean) => {
-    if (questions.length === 0) return <div>Error cargando preguntas.</div>;
-    const question = questions[currentQuestionIndex];
-    return (
-      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-        <div className="px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0 z-50 relative">
-          <div className="flex items-center gap-4">
-             <button onClick={() => { endSessionTracking(isExam ? 'exam' : 'practice'); setCurrentView(isExam ? 'topic-detail' : 'practice-select'); }} className="text-slate-500 hover:text-red-500 transition-colors p-1"><XCircle className="w-7 h-7" /></button>
-              <div className="flex flex-col"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{isExam ? `EXAMEN` : 'Práctica'}</span><span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Pregunta {currentQuestionIndex + 1} / {questions.length}</span></div>
-          </div>
-        </div>
-        <div className="flex flex-1 overflow-hidden relative">
-           <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
-              <div className="max-w-2xl w-full">
-                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mb-8"><div className="bg-blue-600 dark:bg-blue-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}></div></div>
-                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 md:p-10">
-                    <h3 className="text-2xl font-semibold text-slate-800 dark:text-white mb-8 leading-snug">{question.text}</h3>
-                    {isExam ? (
-                       <div className="mb-8"><input autoFocus type="text" autoComplete="off" className="w-full p-4 text-lg rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white" placeholder="Respuesta..." value={userAnswers[question.id] || ''} onChange={(e) => handleAnswer(e.target.value)} /></div>
-                    ) : (
-                      <div className="space-y-3 mb-8">
-                        {question.options.map((option, idx) => {
-                          const isSelected = userAnswers[question.id] === option;
-                          const isCorrect = option === question.correctAnswer;
-                          let btnClass = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative ";
-                          if (showFeedback) {
-                             if (isCorrect) btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200";
-                             else if (isSelected) btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200";
-                             else btnClass += "border-slate-100 dark:border-slate-700 opacity-50";
-                          } else { btnClass += "border-slate-100 dark:border-slate-700 hover:border-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50"; }
-                          return (
-                            <button key={idx} onClick={() => !showFeedback && !userAnswers[question.id] && handleAnswer(option)} disabled={showFeedback} className={btnClass}>
-                              <div className="flex items-center justify-between"><span className="font-medium text-lg">{option}</span>{showFeedback && isCorrect && <CheckCircle className="w-6 h-6 text-green-500" />}{showFeedback && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-red-500" />}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {!isExam && showFeedback && <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-lg mb-8"><h4 className="font-bold text-blue-900 dark:text-blue-200 mb-1">Explicación:</h4><p className="text-blue-800 dark:text-blue-100">{question.explanation}</p></div>}
-                    <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-700">
-                       <Button variant="ghost" onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))} disabled={currentQuestionIndex === 0} className={currentQuestionIndex === 0 ? 'invisible' : ''}><ChevronLeft className="w-4 h-4 mr-1 inline"/> Anterior</Button>
-                       {currentQuestionIndex === questions.length - 1 ? <Button onClick={finishExam} className="bg-green-600">Finalizar <CheckCircle className="w-5 h-5 ml-2 inline"/></Button> : <Button onClick={() => setCurrentQuestionIndex(prev => prev + 1)} disabled={!isExam && !userAnswers[question.id]} className="px-6 py-2">Siguiente <ChevronRight className="w-4 h-4 ml-1 inline"/></Button>}
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderResults = () => {
-    if (!examResult) return null;
-    const percentage = Math.round((examResult.score / examResult.total) * 100);
-    const isPass = percentage >= 50;
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-12 animate-in fade-in zoom-in duration-300">
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-          <div className={`p-12 text-center ${isPass ? 'bg-gradient-to-b from-green-50 to-white dark:from-green-900/20 dark:to-slate-800' : 'bg-gradient-to-b from-red-50 to-white dark:from-red-900/20 dark:to-slate-800'}`}>
-            <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 shadow-xl ${isPass ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>{isPass ? <Trophy className="w-12 h-12" /> : <XCircle className="w-12 h-12" />}</div>
-            <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">{isPass ? 'GG Well Played!' : 'Nice Try!'}</h2>
-            <div className="flex justify-center gap-8 mb-8"><div className="text-center"><span className="block text-5xl font-black text-slate-800 dark:text-white mb-1">{percentage}%</span><span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Score</span></div></div>
-            <div className="mt-8 flex gap-4"><Button onClick={() => setCurrentView('topic-detail')} variant="outline" fullWidth>Back to Topic</Button><Button onClick={() => setCurrentView('dashboard')} fullWidth>Continue</Button></div>
-          </div>
-        </div>
       </div>
     );
   };
@@ -760,13 +1688,13 @@ export default function App() {
   const renderStudyMode = () => (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <button onClick={() => { endSessionTracking('study'); setCurrentView('topic-detail'); }} className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">
+        <button onClick={() => { endSessionTracking('study'); setCurrentView('topic-detail'); }} className="flex items-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <ChevronLeft className="w-5 h-5 mr-1" /> Volver
         </button>
         <span className="text-sm font-bold uppercase tracking-wider px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">Modo Estudio</span>
       </div>
 
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+      <div className="space-y-8 animate-fade-in">
         {renderMarkdown(theoryContent, {
            onGenerate: generateComic,
            isGenerating: isGeneratingComic,
@@ -783,6 +1711,238 @@ export default function App() {
     </div>
   );
 
+  const renderQuestionCard = (isExam: boolean) => {
+    if (questions.length === 0) return <div>Error cargando preguntas.</div>;
+    const question = questions[currentQuestionIndex];
+    const hasAnswered = !!userAnswers[question.id];
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+    const handleExit = () => {
+       endSessionTracking(isExam ? 'exam' : 'practice');
+       setCurrentView(isExam ? 'topic-detail' : 'practice-select');
+    };
+
+    return (
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        <div className="px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0 z-50 relative">
+          <div className="flex items-center gap-4">
+             <button 
+                type="button"
+                onClick={handleExit}
+                className="text-slate-500 hover:text-red-500 transition-colors p-1"
+              >
+                 <XCircle className="w-7 h-7" />
+              </button>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {isExam ? `EXAMEN FINAL: ${selectedTopic?.title}` : currentExerciseSet !== null ? `${selectedTopic?.title} - Ejercicio ${currentExerciseSet + 1}` : 'Práctica'}
+                </span>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Pregunta {currentQuestionIndex + 1} / {questions.length}</span>
+              </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+             {!isExam && (
+               <button 
+                 onClick={() => setIsTheoryPanelOpen(!isTheoryPanelOpen)}
+                 className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isTheoryPanelOpen ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+               >
+                 <Lightbulb className="w-4 h-4" /> <span className="hidden sm:inline">Chuleta</span>
+               </button>
+             )}
+          </div>
+        </div>
+        
+        <div className="flex flex-1 overflow-hidden relative">
+           <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
+              <div className="max-w-2xl w-full">
+                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mb-8">
+                    <div 
+                      className="bg-blue-600 dark:bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                    ></div>
+                 </div>
+
+                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 md:p-10">
+                    <h3 className="text-2xl font-semibold text-slate-800 dark:text-white mb-8 leading-snug">{question.text}</h3>
+
+                    {isExam ? (
+                       <div className="mb-8">
+                          <input 
+                            autoFocus
+                            type="text"
+                            autoComplete="off"
+                            className="w-full p-4 text-lg rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-0 outline-none transition-all placeholder:text-slate-400"
+                            placeholder="Escribe la respuesta completa aquí..."
+                            value={userAnswers[question.id] || ''}
+                            onChange={(e) => handleAnswer(e.target.value)}
+                          />
+                       </div>
+                    ) : (
+                      <div className="space-y-3 mb-8">
+                        {question.options.map((option, idx) => {
+                          const isSelected = userAnswers[question.id] === option;
+                          const isCorrect = option === question.correctAnswer;
+                          let btnClass = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative ";
+                          
+                          if (showFeedback) {
+                             if (isCorrect) btnClass += "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200";
+                             else if (isSelected) btnClass += "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200";
+                             else btnClass += "border-slate-100 dark:border-slate-700 opacity-50";
+                          } else {
+                             btnClass += "border-slate-100 dark:border-slate-700 hover:border-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/50";
+                          }
+                          
+                          return (
+                            <button key={idx} onClick={() => !showFeedback && !hasAnswered && handleAnswer(option)} disabled={showFeedback} className={btnClass}>
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-lg">{option}</span>
+                                {showFeedback && isCorrect && <CheckCircle className="w-6 h-6 text-green-500" />}
+                                {showFeedback && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-red-500" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {!isExam && showFeedback && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-lg mb-8 animate-in fade-in slide-in-from-top-2">
+                        <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-1">Explicación:</h4>
+                        <p className="text-blue-800 dark:text-blue-100 leading-relaxed">{question.explanation}</p>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-700">
+                       <Button variant="ghost" onClick={prevQuestion} disabled={currentQuestionIndex === 0} className={currentQuestionIndex === 0 ? 'invisible' : ''}>
+                         <ChevronLeft className="w-4 h-4 mr-1 inline"/> Anterior
+                       </Button>
+                       
+                       {isLastQuestion ? (
+                         <Button onClick={finishExam} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg shadow-lg shadow-green-500/30">
+                           Finalizar <CheckCircle className="w-5 h-5 ml-2 inline"/>
+                         </Button>
+                       ) : (
+                         <Button onClick={nextQuestion} disabled={!isExam && !hasAnswered} className="px-6 py-2">
+                           Siguiente <ChevronRight className="w-4 h-4 ml-1 inline"/>
+                         </Button>
+                       )}
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div className={`absolute top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 transform transition-transform duration-300 ease-in-out z-20 ${isTheoryPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+              <div className="h-full flex flex-col">
+                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-500"/> Material de Apoyo
+                    </h3>
+                    <button onClick={() => setIsTheoryPanelOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
+                      <X className="w-5 h-5 text-slate-500"/>
+                    </button>
+                 </div>
+                 <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {renderMarkdown(theoryContent)}
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+        </div>
+      </div>
+    );
+  };
+
+  const renderResults = () => {
+    if (!examResult) return null;
+    const percentage = Math.round((examResult.score / examResult.total) * 100);
+    const isPass = percentage >= 50;
+
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 animate-in fade-in zoom-in duration-300">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div className={`p-12 text-center ${isPass ? 'bg-gradient-to-b from-green-50 to-white dark:from-green-900/20 dark:to-slate-800' : 'bg-gradient-to-b from-red-50 to-white dark:from-red-900/20 dark:to-slate-800'}`}>
+            
+            <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 shadow-xl ${isPass ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+              {isPass ? <Trophy className="w-12 h-12" /> : <XCircle className="w-12 h-12" />}
+            </div>
+
+            <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">{isPass ? 'GG Well Played!' : 'Nice Try!'}</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-8">{examResult.topicTitle}</p>
+            
+            {examResult.isFlaggedForSpeed && (
+               <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm flex items-center justify-center gap-2">
+                  <AlertCircle className="w-4 h-4"/> 
+                  <span>Suspiciously fast completion. XP reduced.</span>
+               </div>
+            )}
+
+            <div className="flex justify-center gap-8 mb-8">
+               <div className="text-center">
+                  <span className="block text-5xl font-black text-slate-800 dark:text-white mb-1">{percentage}%</span>
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Score</span>
+               </div>
+               <div className="w-px bg-slate-200 dark:bg-slate-700"></div>
+               <div className="text-center">
+                  <span className="block text-5xl font-black text-slate-800 dark:text-white mb-1">{examResult.score}/{examResult.total}</span>
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Correct</span>
+               </div>
+            </div>
+
+            {isPass && examResult.xpEarned && (
+               <div className="inline-flex items-center gap-2 px-6 py-3 bg-amber-100 dark:bg-amber-900/30 rounded-full border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 font-bold mb-8 animate-bounce">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> +{examResult.xpEarned} XP Earned
+               </div>
+            )}
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-8 border-t border-slate-100 dark:border-slate-700">
+            <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-blue-500"/> Performance Review
+            </h3>
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+               {examResult.answers.map((ans, idx) => {
+                 const question = questions.find(q => q.id === ans.questionId);
+                 if (!question) return null;
+                 return (
+                   <div key={idx} className={`p-4 rounded-xl border ${ans.isCorrect ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-900/30' : 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'}`}>
+                      <div className="flex gap-3">
+                         <div className={`mt-1 shrink-0 ${ans.isCorrect ? 'text-green-600' : 'text-red-500'}`}>
+                            {ans.isCorrect ? <Check className="w-5 h-5"/> : <X className="w-5 h-5"/>}
+                         </div>
+                         <div>
+                            <p className="font-medium text-slate-800 dark:text-slate-200 mb-2">{question.text}</p>
+                            <div className="text-sm space-y-1">
+                               {!ans.isCorrect && (
+                                  <p className="text-red-600 dark:text-red-400">Your Answer: <span className="font-semibold">{ans.selected || "(Skipped)"}</span></p>
+                               )}
+                               <p className="text-green-600 dark:text-green-400">Correct: <span className="font-semibold">{ans.correct}</span></p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                 );
+               })}
+            </div>
+            
+            <div className="mt-8 flex gap-4">
+              <Button onClick={() => setCurrentView('topic-detail')} variant="outline" fullWidth>Back to Topic</Button>
+              <Button onClick={() => { 
+                if (currentView === 'exam' || currentView === 'practice') {
+                  startStudy(selectedTopic!); 
+                } else {
+                  setCurrentView('leaderboard');
+                }
+              }} fullWidth>Continue to Leaderboard</Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors duration-200">
       {renderHeader()}
@@ -790,10 +1950,12 @@ export default function App() {
       <main className="transition-all duration-300">
         {currentView === 'login' && <LoginView onLogin={handleLogin} />}
         {currentView === 'admin-dashboard' && renderAdminDashboard()}
+        {currentView === 'student-progress' && renderStudentProgress()}
         {currentView === 'content-editor' && topicToEdit && <ContentEditor topic={topicToEdit.topic} onSave={saveContentChanges} onCancel={() => { setTopicToEdit(null); setCurrentView('admin-dashboard'); }} />}
         {currentView === 'dashboard' && renderDashboard()}
         {currentView === 'topic-detail' && renderTopicDetail()}
         {currentView === 'practice-select' && renderPracticeSelection()}
+        {currentView === 'leaderboard' && renderLeaderboard()}
         {(currentView === 'study' || currentView === 'practice' || currentView === 'exam') && isLoading && <LoadingSpinner />}
         {!isLoading && currentView === 'study' && renderStudyMode()}
         {!isLoading && currentView === 'practice' && renderQuestionCard(false)}

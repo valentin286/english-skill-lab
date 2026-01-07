@@ -11,7 +11,7 @@ export interface Topic {
   title: string;
   description: string;
   icon: string;
-  group?: string; // Folder name (optional)
+  group?: string; // Support for sub-folders like "Verb Tenses" inside "Grammar"
   manualTheory?: string; 
   manualQuestions?: Question[]; 
   examQuestions?: Question[];
