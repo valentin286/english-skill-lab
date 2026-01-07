@@ -11,6 +11,7 @@ export interface Topic {
   title: string;
   description: string;
   icon: string;
+  group?: string; // Folder name (optional)
   manualTheory?: string; 
   manualQuestions?: Question[]; 
   examQuestions?: Question[];
