@@ -9,68 +9,65 @@ import {
   Brain, 
   CheckCircle, 
   ChevronLeft, 
-  ChevronRight, 
+  ChevronRight,
   GraduationCap, 
   Home, 
   Layout, 
-  Menu, 
-  XCircle, 
-  Clock, 
-  Briefcase, 
-  Plane, 
-  Puzzle, 
-  Utensils, 
-  Newspaper, 
-  History, 
-  GitBranch, 
-  Repeat, 
-  FileText, 
-  Mail, 
-  Link, 
-  LogOut, 
-  Users, 
-  Settings, 
-  Plus, 
-  Trash2, 
-  FolderPlus, 
-  Edit3, 
-  Save, 
-  FileEdit, 
-  Eye, 
-  Code, 
-  Info, 
-  Moon, 
-  Sun, 
-  X, 
-  ArrowUp, 
-  ArrowDown, 
-  BarChart, 
-  Calendar, 
-  AlertCircle, 
-  Lightbulb, 
-  Bookmark, 
-  Check, 
-  Award, 
-  MoreVertical, 
-  Layers, 
-  FileQuestion, 
-  Search, 
-  Lock, 
-  Star, 
-  Zap, 
-  Image as ImageIcon, 
-  Trophy, 
-  Medal, 
-  Crown, 
-  Sparkles, 
-  Shield, 
-  Target, 
-  Flame, 
-  FlaskConical, 
-  MessageCircle,
-  Link2,
-  FolderOpen,
-  GripVertical
+  Menu,
+  XCircle,
+  Clock,
+  Briefcase,
+  Plane,
+  Puzzle,
+  Utensils,
+  Newspaper,
+  History,
+  GitBranch,
+  Repeat,
+  FileText,
+  Mail,
+  Link,
+  LogOut,
+  Users,
+  Settings,
+  Plus,
+  Trash2,
+  FolderPlus,
+  Edit3,
+  Save,
+  FileEdit,
+  Eye,
+  Code,
+  Info,
+  Moon,
+  Sun,
+  X,
+  ArrowUp,
+  ArrowDown,
+  BarChart,
+  Calendar,
+  AlertCircle,
+  Lightbulb,
+  Bookmark,
+  Check,
+  Award,
+  MoreVertical,
+  Layers,
+  FileQuestion,
+  Search,
+  Lock,
+  Star,
+  Zap,
+  Image as ImageIcon,
+  Trophy,
+  Medal,
+  Crown,
+  Sparkles,
+  Shield,
+  Target,
+  Flame,
+  FlaskConical,
+  MessageCircle
 } from 'lucide-react';
 
 // Initialize AI for Image Generation
@@ -118,13 +115,11 @@ const getIcon = (iconName: string) => {
     FileText: <FileText className="w-5 h-5" />,
     Mail: <Mail className="w-5 h-5" />,
     Link: <Link className="w-5 h-5" />,
-    Link2: <Link2 className="w-5 h-5" />,
     Shield: <Shield className="w-5 h-5" />,
     Crown: <Crown className="w-5 h-5" />,
     Zap: <Zap className="w-5 h-5" />,
     Target: <Target className="w-5 h-5" />,
     Calendar: <Calendar className="w-5 h-5" />,
-    Layers: <Layers className="w-5 h-5" />,
   };
   return icons[iconName] || <BookOpen className="w-5 h-5" />;
 };
@@ -411,7 +406,8 @@ const ContentEditor: React.FC<{
   );
 };
 
-export default function App() {
+export const App: React.FC = () => {
+  // ... STATE ...
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('app_users');
@@ -460,6 +456,7 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Comic State
   const [comicUrl, setComicUrl] = useState<string | null>(null);
   const [isGeneratingComic, setIsGeneratingComic] = useState(false);
 
@@ -474,15 +471,10 @@ export default function App() {
   const [newCatTitle, setNewCatTitle] = useState('');
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  
-  // DRAG AND DROP STATE
-  const [draggedTopic, setDraggedTopic] = useState<{ topicId: string, sourceCatId: string } | null>(null);
-  const [dragOverTarget, setDragOverTarget] = useState<{ id: string, type: 'category' | 'group' } | null>(null);
-  const [newFolderName, setNewFolderName] = useState('');
-  const [creatingFolderIn, setCreatingFolderIn] = useState<string | null>(null);
 
   const [analyticsStudentId, setAnalyticsStudentId] = useState<string | null>(null);
 
+  // ... EFFECTS ... 
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -573,10 +565,6 @@ export default function App() {
          prompt += "Left panel: A detective in a trench coat investigating a crime scene with a magnifying glass (Past Continuous 'was investigating'). Right panel: The same detective suddenly finding a glowing golden key on the floor, surprised (Past Simple 'found'). 16-bit pixel art.";
       } else if (selectedTopic.id === 'pres-simple-cont') {
          prompt += "Left panel: A detective standing calmly in an office smoking a pipe, caption 'I solve crimes'. Right panel: The same detective running fast chasing a shadowy thief in a city street, sweating, caption 'I am chasing a suspect'. 16-bit pixel art.";
-      } else if (selectedTopic.id === 'past-perfect-simple') {
-         prompt += "Left panel: A train leaving the station, seen from the back, clock showing 9:00 (Past Perfect 'had left'). Right panel: Two people arriving at the empty platform, clock showing 9:05 (Past Simple 'arrived'). 16-bit pixel art.";
-      } else if (selectedTopic.id === 'perf-continuous') {
-         prompt += "Left panel: A runner jogging in a park, sun shining, sweating heavily, caption 'I have been running' (Present Perfect Continuous). Right panel: The same runner sitting on a bench at night, remembering the run, still looking tired, caption 'I had been running' (Past Perfect Continuous). 16-bit pixel art.";
       } else {
          prompt += "A funny situation showing the difference between two grammar tenses. 16-bit pixel art.";
       }
@@ -602,6 +590,7 @@ export default function App() {
     }
   };
 
+  // ... (Admin logic kept same)
   const openContentEditor = (catId: string, topic: Topic) => { setTopicToEdit({ catId, topic }); setCurrentView('content-editor'); };
   const saveContentChanges = (updatedTopic: Topic) => {
     if (!topicToEdit) return;
@@ -616,78 +605,16 @@ export default function App() {
   const addCategory = () => { if (!newCatTitle.trim()) return; setCategories([...categories, { id: `cat-${Date.now()}`, title: newCatTitle, description: 'Nueva carpeta', topics: [], color: 'bg-slate-500' }]); setNewCatTitle(''); };
   const deleteCategory = (id: string) => { if (confirm('Se eliminarán todos los temas dentro de esta carpeta. ¿Continuar?')) setCategories(categories.filter(c => c.id !== id)); };
   const updateCategoryMeta = () => { if (!editingCatMeta) return; setCategories(categories.map(c => c.id === editingCatMeta.id ? { ...c, title: editingCatMeta.title, description: editingCatMeta.description } : c)); setEditingCatMeta(null); };
-  
-  // ROBUST DRAG AND DROP HANDLERS
-  const handleDragStart = (e: React.DragEvent, topicId: string, sourceCatId: string) => {
-    setDraggedTopic({ topicId, sourceCatId });
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', JSON.stringify({ topicId, sourceCatId }));
+  const addTopic = (categoryId: string) => { if (!newTopicTitle.trim()) return; const newTopic: Topic = { id: `topic-${Date.now()}`, title: newTopicTitle, description: 'Pendiente de contenido', icon: 'BookOpen' }; setCategories(categories.map(c => { if (c.id === categoryId) return { ...c, topics: [...c.topics, newTopic] }; return c; })); setNewTopicTitle(''); setEditingCategoryId(null); };
+  const moveTopic = (catId: string, topicIndex: number, direction: 'up' | 'down') => {
+    setCategories(categories.map(c => {
+      if (c.id !== catId) return c;
+      const newTopics = [...c.topics];
+      if (direction === 'up' && topicIndex > 0) [newTopics[topicIndex], newTopics[topicIndex - 1]] = [newTopics[topicIndex - 1], newTopics[topicIndex]];
+      else if (direction === 'down' && topicIndex < newTopics.length - 1) [newTopics[topicIndex], newTopics[topicIndex + 1]] = [newTopics[topicIndex + 1], newTopics[topicIndex]];
+      return { ...c, topics: newTopics };
+    }));
   };
-
-  const handleDragOver = (e: React.DragEvent, targetId: string, type: 'category' | 'group') => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    e.dataTransfer.dropEffect = 'move';
-    if (dragOverTarget?.id !== targetId) {
-      setDragOverTarget({ id: targetId, type });
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetCatId: string, targetGroup?: string) => {
-    e.preventDefault();
-    e.stopPropagation(); 
-    setDragOverTarget(null);
-
-    if (!draggedTopic) return;
-
-    setCategories(prevCategories => {
-      const sourceCategory = prevCategories.find(c => c.id === draggedTopic.sourceCatId);
-      const topicToMove = sourceCategory?.topics.find(t => t.id === draggedTopic.topicId);
-
-      if (!topicToMove) return prevCategories;
-
-      return prevCategories.map(cat => {
-        const newCat = { ...cat };
-        let newTopics = [...newCat.topics];
-
-        if (newCat.id === draggedTopic.sourceCatId) {
-          newTopics = newTopics.filter(t => t.id !== draggedTopic.topicId);
-        }
-
-        if (newCat.id === targetCatId) {
-          const updatedTopic = { ...topicToMove, group: targetGroup };
-          newTopics.push(updatedTopic);
-        }
-
-        newCat.topics = newTopics;
-        return newCat;
-      });
-    });
-
-    setDraggedTopic(null);
-  };
-
-  const addTopic = (categoryId: string, groupName?: string) => { 
-    if (!newTopicTitle.trim()) return; 
-    const newTopic: Topic = { 
-      id: `topic-${Date.now()}`, 
-      title: newTopicTitle, 
-      description: 'Pendiente de contenido', 
-      icon: 'BookOpen',
-      group: groupName 
-    }; 
-    setCategories(categories.map(c => { 
-      if (c.id === categoryId) return { ...c, topics: [...c.topics, newTopic] }; 
-      return c; 
-    })); 
-    setNewTopicTitle(''); 
-    setEditingCategoryId(null); 
-  };
-
   const deleteTopic = (categoryId: string, topicId: string) => { if (confirm('¿Eliminar este tema?')) setCategories(categories.map(c => { if (c.id === categoryId) return { ...c, topics: c.topics.filter(t => t.id !== topicId) }; return c; })); };
 
   // ... (Content Loaders & Gameplay Logic)
@@ -805,30 +732,37 @@ export default function App() {
     });
 
     // ANTI-CHEAT MECHANIC: Speed Check
-    const minSecondsPerQuestion = 3; 
+    const minSecondsPerQuestion = 3; // Unrealistic to read and answer faster than this on average
     const isFlaggedForSpeed = duration < (questions.length * minSecondsPerQuestion);
     
     let xpEarned = 0;
     if (currentUser) {
+      // Calculate XP with Anti-cheat and Difficulty Logic
       const baseXP = 10;
       let multiplier = 1.0;
       
+      // Streak Bonus
       if (currentUser.streakDays > 5) multiplier += 0.2;
       if (currentUser.streakDays > 10) multiplier += 0.5;
 
-      if (isFlaggedForSpeed) multiplier = 0.1; 
+      // Penalties
+      if (isFlaggedForSpeed) multiplier = 0.1; // 90% reduction for speed hacking
 
       xpEarned = Math.floor(score * baseXP * multiplier);
       
+      // Update User State
       const updatedUser = { ...currentUser, xp: (currentUser.xp || 0) + xpEarned };
       
+      // League Promotion Logic (Simple Simulation)
       const currentLeagueInfo = LEAGUES[updatedUser.league];
       const nextLeague = Object.entries(LEAGUES).find(([_, info]: [string, any]) => info.minXP > currentLeagueInfo.minXP && updatedUser.xp >= info.minXP);
       
       if (nextLeague) {
          updatedUser.league = nextLeague[0] as LeagueTier;
+         // Alert user of promotion could go here
       }
 
+      // Update Mission Progress
       const updatedMissions = missions.map(m => {
          if (m.id === 'm1' && currentView === 'practice') return { ...m, progress: Math.min(m.goal, m.progress + 1) };
          if (m.id === 'm2' && currentView === 'exam' && score === questions.length) return { ...m, progress: 1 };
@@ -839,6 +773,7 @@ export default function App() {
       setCurrentUser(updatedUser);
       setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
 
+      // Save Progress
       const newProgress: UserProgress = {
         userId: currentUser.id,
         topicId: selectedTopic!.id,
@@ -877,6 +812,7 @@ export default function App() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">
+          {/* LEFT: League & Status */}
           <div className="w-full md:w-1/3 space-y-6">
              <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-t-8 ${currentLeagueData.color.split(' ')[0].replace('text-', 'border-')} p-6 text-center`}>
                 <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${currentLeagueData.color} bg-opacity-20`}>
@@ -903,6 +839,7 @@ export default function App() {
              </div>
           </div>
 
+          {/* RIGHT: Leaderboard Table */}
           <div className="w-full md:w-2/3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
              <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <h3 className="font-bold text-xl text-slate-800 dark:text-white">Global Ranking</h3>
@@ -936,6 +873,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* MISSIONS SECTION */}
         <div className="mt-12">
            <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6 flex items-center gap-2">
               <Target className="w-6 h-6 text-red-500"/> Active Missions
@@ -1171,169 +1109,80 @@ export default function App() {
       )}
 
       {adminTab === 'resources' && (
-        <div className="space-y-8 animate-in fade-in">
+        <div className="space-y-8">
            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-             <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-lg text-slate-800 dark:text-white">Estructura del Curso</h3>
-                <div className="flex items-center gap-4">
-                  <div className="text-xs text-slate-500">Arrastra los temas para moverlos entre carpetas</div>
-                  <div className="flex gap-2">
-                      <input 
-                        placeholder="Nueva Categoría..." 
-                        className="px-3 py-1 border rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600 dark:text-white"
-                        value={newCatTitle}
-                        onChange={e => setNewCatTitle(e.target.value)}
-                      />
-                      <Button onClick={addCategory} size="sm"><FolderPlus className="w-4 h-4 mr-2 inline"/> Crear</Button>
-                  </div>
-                </div>
+             <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-white">Estructura del Curso</h3>
+             <div className="flex gap-2 mb-6">
+                <input 
+                  placeholder="Nueva Categoría..." 
+                  className="flex-1 px-4 py-2 border rounded-lg bg-slate-50 dark:bg-slate-900 dark:border-slate-600 dark:text-white"
+                  value={newCatTitle}
+                  onChange={e => setNewCatTitle(e.target.value)}
+                />
+                <Button onClick={addCategory}><FolderPlus className="w-4 h-4 mr-2 inline"/> Crear</Button>
              </div>
              
-             <div className="space-y-6">
-                {categories.map(cat => {
-                  const groups: Record<string, Topic[]> = {};
-                  const rootTopics: Topic[] = [];
-                  cat.topics.forEach(t => {
-                    if (t.group) {
-                      if (!groups[t.group]) groups[t.group] = [];
-                      groups[t.group].push(t);
-                    } else {
-                      rootTopics.push(t);
-                    }
-                  });
-
-                  return (
-                    <div 
-                      key={cat.id} 
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden transition-colors"
-                    >
-                       <div 
-                          className={`bg-slate-50 dark:bg-slate-700/50 p-4 flex items-center justify-between group/header ${dragOverTarget?.id === cat.id ? 'ring-2 ring-blue-500 ring-inset' : ''}`}
-                          onDragOver={(e) => handleDragOver(e, cat.id, 'category')}
-                          onDrop={(e) => handleDrop(e, cat.id, undefined)} 
-                          onDragLeave={handleDragLeave}
-                       >
-                          <div className="flex items-center gap-3">
-                             <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Layout className="w-4 h-4 text-slate-400"/> {cat.title}</h4>
-                             <p className="text-xs text-slate-500 hidden sm:block">({cat.topics.length} temas)</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                             <button onClick={() => deleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
-                          </div>
-                       </div>
-
-                       <div className="p-4 bg-white dark:bg-slate-800 space-y-4">
-                          {creatingFolderIn === cat.id && (
-                             <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                                <FolderOpen className="w-4 h-4 text-blue-500"/>
-                                <input 
-                                  autoFocus 
-                                  placeholder="Nombre de la carpeta..." 
-                                  className="flex-1 bg-transparent text-sm outline-none text-slate-800 dark:text-white"
-                                  value={newFolderName}
-                                  onChange={e => setNewFolderName(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter' && newFolderName.trim()) {
-                                       setEditingCategoryId(cat.id);
-                                       setCreatingFolderIn(null);
-                                    }
-                                  }}
-                                />
-                                <button onClick={() => setCreatingFolderIn(null)}><X className="w-4 h-4 text-slate-400"/></button>
+             <div className="space-y-4">
+                {categories.map(cat => (
+                  <div key={cat.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                     <div className="bg-slate-50 dark:bg-slate-700/50 p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                           {editingCatMeta?.id === cat.id ? (
+                             <div className="flex gap-2">
+                               <input value={editingCatMeta.title} onChange={e => setEditingCatMeta({...editingCatMeta, title: e.target.value})} className="px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white"/>
+                               <input value={editingCatMeta.description} onChange={e => setEditingCatMeta({...editingCatMeta, description: e.target.value})} className="px-2 py-1 text-sm border rounded dark:bg-slate-800 dark:border-slate-600 dark:text-white"/>
+                               <button onClick={updateCategoryMeta}><Check className="w-4 h-4 text-green-500"/></button>
                              </div>
-                          )}
-
-                          {Object.keys(groups).map(groupName => (
-                             <div 
-                                key={groupName} 
-                                className={`border-l-4 pl-4 ml-1 rounded-r-lg transition-all duration-200 ${dragOverTarget?.id === `${cat.id}-${groupName}` ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-inner' : 'border-slate-200 dark:border-slate-700'}`}
-                                onDragOver={(e) => handleDragOver(e, `${cat.id}-${groupName}`, 'group')}
-                                onDrop={(e) => handleDrop(e, cat.id, groupName)}
-                                onDragLeave={handleDragLeave}
-                             >
-                                <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2 py-2">
-                                   <FolderOpen className={`w-4 h-4 ${dragOverTarget?.id === `${cat.id}-${groupName}` ? 'text-blue-500' : 'text-slate-400'}`}/> 
-                                   {groupName}
-                                </h5>
-                                <div className="space-y-2">
-                                   {groups[groupName].map(topic => (
-                                      <div 
-                                        key={topic.id} 
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, topic.id, cat.id)}
-                                        className="flex items-center justify-between p-2 border rounded bg-white dark:bg-slate-800/50 hover:border-blue-300 dark:hover:border-blue-700 cursor-grab active:cursor-grabbing shadow-sm"
-                                      >
-                                         <div className="flex items-center gap-2">
-                                            <GripVertical className="w-4 h-4 text-slate-300"/>
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
-                                         </div>
-                                         <div className="flex gap-1">
-                                            <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400"><FileEdit className="w-3 h-3"/></button>
-                                            <button onClick={() => deleteTopic(cat.id, topic.id)} className="p-1 text-red-400"><Trash2 className="w-3 h-3"/></button>
-                                         </div>
-                                      </div>
-                                   ))}
+                           ) : (
+                             <div>
+                               <h4 className="font-bold text-slate-800 dark:text-white">{cat.title}</h4>
+                               <p className="text-xs text-slate-500 dark:text-slate-400">{cat.description}</p>
+                             </div>
+                           )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <button onClick={() => setEditingCatMeta({id: cat.id, title: cat.title, description: cat.description})} className="p-1.5 text-slate-400 hover:text-blue-500"><Edit3 className="w-4 h-4"/></button>
+                           <button onClick={() => deleteCategory(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                        </div>
+                     </div>
+                     <div className="p-4 bg-white dark:bg-slate-800">
+                        <div className="space-y-2 mb-4">
+                           {cat.topics.map((topic, idx) => (
+                             <div key={topic.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/30 group">
+                                <div className="flex items-center gap-3">
+                                   <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded text-blue-600 dark:text-blue-400">{getIcon(topic.icon)}</div>
+                                   <span className="font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button onClick={() => moveTopic(cat.id, idx, 'up')} disabled={idx === 0} className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"><ArrowUp className="w-4 h-4"/></button>
+                                   <button onClick={() => moveTopic(cat.id, idx, 'down')} disabled={idx === cat.topics.length - 1} className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"><ArrowDown className="w-4 h-4"/></button>
+                                   <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400 hover:text-blue-600"><FileEdit className="w-4 h-4"/></button>
+                                   <button onClick={() => deleteTopic(cat.id, topic.id)} className="p-1 text-red-400 hover:text-red-600"><X className="w-4 h-4"/></button>
                                 </div>
                              </div>
-                          ))}
-
-                          <div 
-                             className={`space-y-2 min-h-[3rem] p-2 rounded-lg border-2 border-dashed border-transparent transition-all ${dragOverTarget?.id === cat.id ? 'border-blue-300 bg-blue-50/50' : ''}`}
-                             onDragOver={(e) => handleDragOver(e, cat.id, 'category')}
-                             onDrop={(e) => handleDrop(e, cat.id, undefined)}
-                          >
-                             {rootTopics.map(topic => (
-                                <div 
-                                  key={topic.id} 
-                                  draggable
-                                  onDragStart={(e) => handleDragStart(e, topic.id, cat.id)}
-                                  className="flex items-center justify-between p-2 border rounded bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-700 cursor-grab active:cursor-grabbing shadow-sm"
-                                >
-                                   <div className="flex items-center gap-2">
-                                      <GripVertical className="w-4 h-4 text-slate-300"/>
-                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
-                                   </div>
-                                   <div className="flex gap-1">
-                                      <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400"><FileEdit className="w-3 h-3"/></button>
-                                      <button onClick={() => deleteTopic(cat.id, topic.id)} className="p-1 text-red-400"><Trash2 className="w-3 h-3"/></button>
-                                   </div>
-                                </div>
-                             ))}
-                             {rootTopics.length === 0 && Object.keys(groups).length === 0 && (
-                                <div className="text-xs text-slate-400 italic text-center">Arrastra temas aquí</div>
-                             )}
-                          </div>
-
-                          {editingCategoryId === cat.id ? (
-                             <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-900 rounded-lg">
-                               <p className="text-xs font-bold text-slate-500 mb-2">Nuevo Tema {newFolderName ? `en ${newFolderName}` : ''}</p>
-                               <div className="flex gap-2 items-center">
-                                 <input 
-                                   autoFocus
-                                   placeholder="Título del tema..." 
-                                   className="flex-1 px-3 py-2 border rounded text-sm dark:bg-slate-800 dark:text-white"
-                                   value={newTopicTitle}
-                                   onChange={e => setNewTopicTitle(e.target.value)}
-                                   onKeyDown={e => e.key === 'Enter' && addTopic(cat.id, newFolderName || undefined)}
-                                 />
-                                 <Button size="sm" onClick={() => addTopic(cat.id, newFolderName || undefined)}>Guardar</Button>
-                                 <button onClick={() => { setEditingCategoryId(null); setNewFolderName(''); }}><X className="w-5 h-5 text-slate-400"/></button>
-                               </div>
-                             </div>
-                          ) : (
-                             <div className="flex gap-4 mt-2">
-                                <button onClick={() => { setEditingCategoryId(cat.id); setNewFolderName(''); }} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
-                                  <Plus className="w-4 h-4"/> Añadir Tema
-                                </button>
-                                <button onClick={() => setCreatingFolderIn(cat.id)} className="text-sm text-slate-500 font-medium flex items-center gap-1">
-                                  <FolderPlus className="w-4 h-4"/> Nueva Carpeta
-                                </button>
-                             </div>
-                          )}
-                       </div>
-                    </div>
-                  );
-                })}
+                           ))}
+                        </div>
+                        {editingCategoryId === cat.id ? (
+                           <div className="flex gap-2 items-center animate-in fade-in slide-in-from-top-2">
+                             <input 
+                               autoFocus
+                               placeholder="Título del tema..." 
+                               className="flex-1 px-3 py-2 border rounded text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white"
+                               value={newTopicTitle}
+                               onChange={e => setNewTopicTitle(e.target.value)}
+                               onKeyDown={e => e.key === 'Enter' && addTopic(cat.id)}
+                             />
+                             <Button size="sm" onClick={() => addTopic(cat.id)}>Añadir</Button>
+                             <button onClick={() => setEditingCategoryId(null)}><X className="w-5 h-5 text-slate-400"/></button>
+                           </div>
+                        ) : (
+                           <button onClick={() => setEditingCategoryId(cat.id)} className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-1">
+                             <Plus className="w-4 h-4"/> Añadir Tema
+                           </button>
+                        )}
+                     </div>
+                  </div>
+                ))}
              </div>
            </div>
         </div>
@@ -1364,12 +1213,14 @@ export default function App() {
   );
 
   const renderStudentProgress = () => {
+    // If admin is viewing, use analyticsStudentId. If student, use currentUser.id
     const targetId = (currentUser?.role === 'admin' && analyticsStudentId) ? analyticsStudentId : currentUser?.id;
     if (!targetId) return <div>Error: Usuario no identificado</div>;
 
     const studentData = users.find(u => u.id === targetId);
     const history = progressHistory.filter(p => p.userId === targetId).sort((a, b) => b.timestamp - a.timestamp);
     
+    // Calculate stats
     const totalPractice = history.filter(h => h.type === 'practice').length;
     const totalExams = history.filter(h => h.type === 'exam').length;
     const avgScore = history.length > 0 ? (history.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / history.length) * 100 : 0;
@@ -1461,17 +1312,6 @@ export default function App() {
   const renderTopicDetail = () => {
     if (!selectedCategory) return null;
 
-    const groups: Record<string, Topic[]> = {};
-    const rootTopics: Topic[] = [];
-    selectedCategory.topics.forEach(t => {
-      if (t.group) {
-        if (!groups[t.group]) groups[t.group] = [];
-        groups[t.group].push(t);
-      } else {
-        rootTopics.push(t);
-      }
-    });
-
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <button 
@@ -1489,66 +1329,36 @@ export default function App() {
           <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">{selectedCategory.description}</p>
         </div>
 
-        <div className="space-y-8">
-          {Object.keys(groups).map(groupName => (
-             <div key={groupName} className="space-y-4">
-                <h3 className="flex items-center gap-2 text-xl font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
-                   <FolderOpen className="w-5 h-5 text-blue-500"/> {groupName}
-                </h3>
-                <div className="grid gap-4">
-                   {groups[groupName].map(topic => (
-                      <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                           <div className="flex items-center gap-4 w-full">
-                              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
-                                {getIcon(topic.icon)}
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{topic.description}</p>
-                              </div>
-                           </div>
-                           <div className="flex gap-2 shrink-0 w-full sm:w-auto">
-                              <Button variant="secondary" size="sm" onClick={() => startStudy(topic)} className="flex-1 sm:flex-none justify-center">Estudiar</Button>
-                              <Button variant="outline" size="sm" onClick={() => preparePractice(topic)} className="flex-1 sm:flex-none justify-center">Practicar</Button>
-                           </div>
-                        </div>
-                      </div>
-                   ))}
-                </div>
-             </div>
-          ))}
+        <div className="space-y-4">
+          {selectedCategory.topics.map((topic) => (
+            <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+               <div className="p-6">
+                 <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                       <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400">
+                         {getIcon(topic.icon)}
+                       </div>
+                       <div>
+                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
+                         <p className="text-slate-500 dark:text-slate-400 mt-1">{topic.description}</p>
+                       </div>
+                    </div>
+                 </div>
 
-          {rootTopics.length > 0 && (
-             <div className="space-y-4">
-                {Object.keys(groups).length > 0 && (
-                   <h3 className="flex items-center gap-2 text-xl font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">
-                      <FileText className="w-5 h-5 text-slate-500"/> Temas Generales
-                   </h3>
-                )}
-                <div className="grid gap-4">
-                  {rootTopics.map(topic => (
-                      <div key={topic.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
-                        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                           <div className="flex items-center gap-4 w-full">
-                              <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg text-blue-600 dark:text-blue-400 shrink-0">
-                                {getIcon(topic.icon)}
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{topic.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{topic.description}</p>
-                              </div>
-                           </div>
-                           <div className="flex gap-2 shrink-0 w-full sm:w-auto">
-                              <Button variant="secondary" size="sm" onClick={() => startStudy(topic)} className="flex-1 sm:flex-none justify-center">Estudiar</Button>
-                              <Button variant="outline" size="sm" onClick={() => preparePractice(topic)} className="flex-1 sm:flex-none justify-center">Practicar</Button>
-                           </div>
-                        </div>
-                      </div>
-                  ))}
-                </div>
-             </div>
-          )}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+                    <Button variant="secondary" onClick={() => startStudy(topic)} className="flex items-center justify-center gap-2">
+                      <BookOpen className="w-4 h-4" /> Estudiar
+                    </Button>
+                    <Button variant="outline" onClick={() => preparePractice(topic)} className="flex items-center justify-center gap-2">
+                       <Brain className="w-4 h-4" /> Practicar
+                    </Button>
+                    <Button variant="outline" onClick={() => startExam(topic)} className="flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-900/50">
+                       <CheckCircle className="w-4 h-4" /> Examen
+                    </Button>
+                 </div>
+               </div>
+            </div>
+          ))}
 
           {selectedCategory.topics.length === 0 && (
              <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">

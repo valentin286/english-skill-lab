@@ -9,65 +9,66 @@ import {
   Brain, 
   CheckCircle, 
   ChevronLeft, 
-  ChevronRight, 
+  ChevronRight,
   GraduationCap, 
   Home, 
   Layout, 
-  Menu, 
-  XCircle, 
-  Clock, 
-  Briefcase, 
-  Plane, 
-  Puzzle, 
-  Utensils, 
-  Newspaper, 
-  History, 
-  GitBranch, 
-  Repeat, 
-  FileText, 
-  Mail, 
-  Link, 
-  LogOut, 
-  Users, 
-  Settings, 
-  Plus, 
-  Trash2, 
-  FolderPlus, 
-  Edit3, 
-  Save, 
-  FileEdit, 
-  Eye, 
-  Code, 
-  Info, 
-  Moon, 
-  Sun, 
-  X, 
-  ArrowUp, 
-  ArrowDown, 
-  BarChart, 
-  Calendar, 
-  AlertCircle, 
-  Lightbulb, 
-  Bookmark, 
-  Check, 
-  Award, 
-  MoreVertical, 
-  Layers, 
-  FileQuestion, 
-  Search, 
-  Lock, 
-  Star, 
-  Zap, 
-  Image as ImageIcon, 
-  Trophy, 
-  Medal, 
-  Crown, 
-  Sparkles, 
-  Shield, 
-  Target, 
-  Flame, 
-  FlaskConical, 
-  MessageCircle
+  Menu,
+  XCircle,
+  Clock,
+  Briefcase,
+  Plane,
+  Puzzle,
+  Utensils,
+  Newspaper,
+  History,
+  GitBranch,
+  Repeat,
+  FileText,
+  Mail,
+  Link,
+  LogOut,
+  Users,
+  Settings,
+  Plus,
+  Trash2,
+  FolderPlus,
+  Edit3,
+  Save,
+  FileEdit,
+  Eye,
+  Code,
+  Info,
+  Moon,
+  Sun,
+  X,
+  ArrowUp,
+  ArrowDown,
+  BarChart,
+  Calendar,
+  AlertCircle,
+  Lightbulb,
+  Bookmark,
+  Check,
+  Award,
+  MoreVertical,
+  Layers,
+  FileQuestion,
+  Search,
+  Lock,
+  Star,
+  Zap,
+  Image as ImageIcon,
+  Trophy,
+  Medal,
+  Crown,
+  Sparkles,
+  Shield,
+  Target,
+  Flame,
+  FlaskConical,
+  MessageCircle,
+  MessageSquare
 } from 'lucide-react';
 
 // Initialize AI for Image Generation
@@ -406,7 +407,7 @@ const ContentEditor: React.FC<{
   );
 };
 
-export default function App() {
+export const App: React.FC = () => {
   // ... STATE ...
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(() => {
@@ -529,6 +530,13 @@ export default function App() {
     setSelectedTopic(null);
   };
 
+  const handleFeedback = () => {
+    const feedback = prompt("Ayúdanos a mejorar. ¿Qué funcionalidad te gustaría ver?");
+    if (feedback) {
+      alert("¡Gracias! Tu opinión es muy valiosa para nosotros.");
+    }
+  };
+
   const goHome = () => {
     if (currentUser?.role === 'admin') setCurrentView('admin-dashboard');
     else setCurrentView('dashboard');
@@ -565,10 +573,6 @@ export default function App() {
          prompt += "Left panel: A detective in a trench coat investigating a crime scene with a magnifying glass (Past Continuous 'was investigating'). Right panel: The same detective suddenly finding a glowing golden key on the floor, surprised (Past Simple 'found'). 16-bit pixel art.";
       } else if (selectedTopic.id === 'pres-simple-cont') {
          prompt += "Left panel: A detective standing calmly in an office smoking a pipe, caption 'I solve crimes'. Right panel: The same detective running fast chasing a shadowy thief in a city street, sweating, caption 'I am chasing a suspect'. 16-bit pixel art.";
-      } else if (selectedTopic.id === 'past-perfect-simple') {
-         prompt += "Left panel: A train leaving the station, seen from the back, clock showing 9:00 (Past Perfect 'had left'). Right panel: Two people arriving at the empty platform, clock showing 9:05 (Past Simple 'arrived'). 16-bit pixel art.";
-      } else if (selectedTopic.id === 'perf-continuous') {
-         prompt += "Left panel: A runner jogging in a park, sun shining, sweating heavily, caption 'I have been running' (Present Perfect Continuous). Right panel: The same runner sitting on a bench at night, remembering the run, still looking tired, caption 'I had been running' (Past Perfect Continuous). 16-bit pixel art.";
       } else {
          prompt += "A funny situation showing the difference between two grammar tenses. 16-bit pixel art.";
       }
@@ -806,7 +810,7 @@ export default function App() {
     setCurrentView('results');
   };
 
-  // ... RENDERERS ...
+  // --- RENDERERS ---
 
   const renderLeaderboard = () => {
     const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
@@ -974,12 +978,16 @@ export default function App() {
   const renderSidebar = () => (
     <>
       {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)} />}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
            <h2 className="font-bold text-xl text-slate-800 dark:text-white">Menu</h2>
            <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
-        <div className="p-4 space-y-2">
+
+        {/* Main Nav Items - Pushed to top */}
+        <div className="p-4 space-y-2 flex-1 overflow-y-auto">
            <button onClick={() => { goHome(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
              <Home className="w-5 h-5"/> Home
            </button>
@@ -993,12 +1001,20 @@ export default function App() {
                </button>
              </>
            )}
-           <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
+        </div>
+        
+        {/* Bottom Actions - Pushed to bottom of flex area */}
+        <div className="p-4 space-y-2 shrink-0 border-t border-slate-100 dark:border-slate-800">
+           <button onClick={() => { handleFeedback(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+             <MessageSquare className="w-5 h-5"/> Feedback
+           </button>
            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium">
              <LogOut className="w-5 h-5"/> Logout
            </button>
         </div>
-        <div className="absolute bottom-0 w-full p-6 border-t border-slate-100 dark:border-slate-800">
+
+        {/* User Profile - Fixed at bottom */}
+        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shrink-0">
            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
                 {currentUser?.name.charAt(0)}
