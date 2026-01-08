@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CATEGORIES as INITIAL_CATEGORIES, LEAGUES, INITIAL_MISSIONS } from './constants';
-import { Category, Topic, AppView, Question, ExamResult, User, Role, StudySession, UserProgress, LeagueTier, Mission } from './types';
+import { Category, Topic, AppView, Question, ExamResult, User, Role, StudySession, UserProgress, LeagueTier, Mission, Feedback } from './types';
 import { GoogleGenAI } from "@google/genai";
 import { Button } from './components/Button';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { generateTheory, generateQuestions } from './services/geminiService';
 import { 
   BookOpen, 
   Brain, 
@@ -67,7 +68,9 @@ import {
   Target,
   Flame,
   FlaskConical,
-  MessageCircle
+  MessageCircle,
+  MessageSquare,
+  FolderInput
 } from 'lucide-react';
 
 // Initialize AI for Image Generation
@@ -262,7 +265,7 @@ const renderMarkdown = (text: string, comicConfig?: { onGenerate: () => void, is
   return <div className="space-y-2">{elements}</div>;
 };
 
-const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin }) => {
+const LoginView = ({ onLogin }: { onLogin: (username: string) => void }) => {
   const [input, setInput] = useState('');
 
   return (
@@ -301,11 +304,15 @@ const LoginView: React.FC<{ onLogin: (username: string) => void }> = ({ onLogin 
   );
 };
 
-const ContentEditor: React.FC<{ 
+const ContentEditor = ({ 
+  topic, 
+  onSave, 
+  onCancel 
+}: { 
   topic: Topic; 
   onSave: (updatedTopic: Topic) => void; 
   onCancel: () => void 
-}> = ({ topic, onSave, onCancel }) => {
+}) => {
   const [activeTab, setActiveTab] = useState<'theory' | 'questions'>('theory');
   const [theory, setTheory] = useState(topic.manualTheory || '');
   const [questions, setQuestions] = useState<Question[]>(topic.manualQuestions || []);
@@ -406,7 +413,7 @@ const ContentEditor: React.FC<{
   );
 };
 
-export const App: React.FC = () => {
+export const App = () => {
   // ... STATE ...
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(() => {
@@ -438,6 +445,11 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_MISSIONS;
   });
 
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>(() => {
+    const saved = localStorage.getItem('app_feedbacks');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const sessionStartTimeRef = useRef<number | null>(null);
 
   const [currentView, setCurrentView] = useState<AppView | 'practice-select'>('login');
@@ -465,12 +477,13 @@ export const App: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [examResult, setExamResult] = useState<ExamResult | null>(null);
 
-  const [adminTab, setAdminTab] = useState<'users' | 'resources' | 'analytics'>('users');
+  const [adminTab, setAdminTab] = useState<'users' | 'resources' | 'analytics' | 'feedback'>('users');
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('student');
   const [newCatTitle, setNewCatTitle] = useState('');
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [movingTopic, setMovingTopic] = useState<{topicId: string, fromCatId: string} | null>(null);
 
   const [analyticsStudentId, setAnalyticsStudentId] = useState<string | null>(null);
 
@@ -491,6 +504,7 @@ export const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('app_sessions', JSON.stringify(studySessions)); }, [studySessions]);
   useEffect(() => { localStorage.setItem('app_completed_exercises', JSON.stringify(completedExercises)); }, [completedExercises]);
   useEffect(() => { localStorage.setItem('app_missions', JSON.stringify(missions)); }, [missions]);
+  useEffect(() => { localStorage.setItem('app_feedbacks', JSON.stringify(feedbacks)); }, [feedbacks]);
 
   const startSessionTracking = () => { sessionStartTimeRef.current = Date.now(); };
 
@@ -527,6 +541,23 @@ export const App: React.FC = () => {
     resetSession();
     setSelectedCategory(null);
     setSelectedTopic(null);
+  };
+
+  const handleFeedback = () => {
+    if (!currentUser) return;
+    const content = prompt("Ayúdanos a mejorar. ¿Qué funcionalidad te gustaría ver?");
+    if (content) {
+      const newFeedback: Feedback = {
+        id: Date.now().toString(),
+        userId: currentUser.id,
+        userName: currentUser.name,
+        content,
+        timestamp: Date.now(),
+        read: false
+      };
+      setFeedbacks(prev => [newFeedback, ...prev]);
+      alert("¡Gracias! Tu opinión es muy valiosa para nosotros.");
+    }
   };
 
   const goHome = () => {
@@ -584,7 +615,7 @@ export const App: React.FC = () => {
       if (imgUrl) setComicUrl(imgUrl);
     } catch (error) {
        console.error(error);
-       alert("Error generating image. Check API Key.");
+       alert("Error generating image.");
     } finally {
        setIsGeneratingComic(false);
     }
@@ -616,6 +647,34 @@ export const App: React.FC = () => {
     }));
   };
   const deleteTopic = (categoryId: string, topicId: string) => { if (confirm('¿Eliminar este tema?')) setCategories(categories.map(c => { if (c.id === categoryId) return { ...c, topics: c.topics.filter(t => t.id !== topicId) }; return c; })); };
+  
+  const moveTopicToCategory = (topicId: string, fromCatId: string, toCatId: string) => {
+    if (fromCatId === toCatId) {
+      setMovingTopic(null);
+      return;
+    }
+    
+    // Find topic
+    const sourceCat = categories.find(c => c.id === fromCatId);
+    const topic = sourceCat?.topics.find(t => t.id === topicId);
+    
+    if (!topic || !sourceCat) return;
+
+    setCategories(prev => {
+      return prev.map(cat => {
+        if (cat.id === fromCatId) {
+          // Remove from source
+          return { ...cat, topics: cat.topics.filter(t => t.id !== topicId) };
+        }
+        if (cat.id === toCatId) {
+          // Add to dest
+          return { ...cat, topics: [...cat.topics, topic] };
+        }
+        return cat;
+      });
+    });
+    setMovingTopic(null);
+  };
 
   // ... (Content Loaders & Gameplay Logic)
   const prepareContent = (topic: Topic) => {
@@ -970,12 +1029,16 @@ export const App: React.FC = () => {
   const renderSidebar = () => (
     <>
       {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)} />}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
            <h2 className="font-bold text-xl text-slate-800 dark:text-white">Menu</h2>
            <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
-        <div className="p-4 space-y-2">
+
+        {/* Main Nav Items - Pushed to top */}
+        <div className="p-4 space-y-2 flex-1 overflow-y-auto">
            <button onClick={() => { goHome(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
              <Home className="w-5 h-5"/> Home
            </button>
@@ -989,12 +1052,20 @@ export const App: React.FC = () => {
                </button>
              </>
            )}
-           <div className="h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
+        </div>
+        
+        {/* Bottom Actions - Pushed to bottom of flex area */}
+        <div className="p-4 space-y-2 shrink-0 border-t border-slate-100 dark:border-slate-800">
+           <button onClick={() => { handleFeedback(); setSidebarOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors font-medium">
+             <MessageSquare className="w-5 h-5"/> Feedback
+           </button>
            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium">
              <LogOut className="w-5 h-5"/> Logout
            </button>
         </div>
-        <div className="absolute bottom-0 w-full p-6 border-t border-slate-100 dark:border-slate-800">
+
+        {/* User Profile - Fixed at bottom */}
+        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shrink-0">
            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
                 {currentUser?.name.charAt(0)}
@@ -1057,10 +1128,11 @@ export const App: React.FC = () => {
         </div>
         <div className="flex gap-3">
            <Button variant="outline" onClick={() => setCurrentView('dashboard')}>Ver como Alumno</Button>
-           <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-             <button onClick={() => setAdminTab('users')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'users' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Estudiantes</button>
-             <button onClick={() => setAdminTab('resources')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'resources' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Contenido</button>
-             <button onClick={() => setAdminTab('analytics')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'analytics' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Analíticas</button>
+           <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto">
+             <button onClick={() => setAdminTab('users')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${adminTab === 'users' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Estudiantes</button>
+             <button onClick={() => setAdminTab('resources')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${adminTab === 'resources' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Contenido</button>
+             <button onClick={() => setAdminTab('analytics')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${adminTab === 'analytics' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Analíticas</button>
+             <button onClick={() => setAdminTab('feedback')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${adminTab === 'feedback' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>Feedback</button>
            </div>
         </div>
       </div>
@@ -1154,6 +1226,23 @@ export const App: React.FC = () => {
                                    <span className="font-medium text-slate-700 dark:text-slate-200">{topic.title}</span>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   {movingTopic?.topicId === topic.id ? (
+                                      <div className="flex gap-1 animate-in fade-in slide-in-from-right-5">
+                                        <select 
+                                          className="text-xs p-1 border rounded bg-white text-slate-700 border-slate-300 dark:bg-slate-900 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                          onChange={(e) => moveTopicToCategory(topic.id, cat.id, e.target.value)}
+                                          defaultValue=""
+                                        >
+                                          <option value="" disabled>Mover a...</option>
+                                          {categories.map(c => (
+                                            <option key={c.id} value={c.id}>{c.title}</option>
+                                          ))}
+                                        </select>
+                                        <button onClick={() => setMovingTopic(null)}><X className="w-4 h-4 text-slate-400"/></button>
+                                      </div>
+                                   ) : (
+                                      <button onClick={() => setMovingTopic({topicId: topic.id, fromCatId: cat.id})} className="p-1 text-slate-400 hover:text-purple-600" title="Mover a otra carpeta"><FolderInput className="w-4 h-4"/></button>
+                                   )}
                                    <button onClick={() => moveTopic(cat.id, idx, 'up')} disabled={idx === 0} className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"><ArrowUp className="w-4 h-4"/></button>
                                    <button onClick={() => moveTopic(cat.id, idx, 'down')} disabled={idx === cat.topics.length - 1} className="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30"><ArrowDown className="w-4 h-4"/></button>
                                    <button onClick={() => openContentEditor(cat.id, topic)} className="p-1 text-blue-400 hover:text-blue-600"><FileEdit className="w-4 h-4"/></button>
@@ -1207,6 +1296,36 @@ export const App: React.FC = () => {
                 </div>
               ))}
            </div>
+        </div>
+      )}
+
+      {adminTab === 'feedback' && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+           <div className="flex justify-between items-center mb-6">
+             <h3 className="font-bold text-lg text-slate-800 dark:text-white">Feedback Recibido</h3>
+             <Button size="sm" variant="outline" onClick={() => { if(confirm('¿Borrar todo el feedback?')) setFeedbacks([]) }}>Limpiar Todo</Button>
+           </div>
+           
+           {feedbacks.length === 0 ? (
+             <p className="text-center text-slate-500 py-8">No hay mensajes de feedback aún.</p>
+           ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {feedbacks.map(fb => (
+                 <div key={fb.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                    <div className="flex justify-between items-start mb-2">
+                       <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-bold text-purple-600">
+                             {fb.userName.charAt(0)}
+                          </div>
+                          <span className="font-bold text-sm text-slate-800 dark:text-white">{fb.userName}</span>
+                       </div>
+                       <span className="text-xs text-slate-400">{new Date(fb.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{fb.content}</p>
+                 </div>
+               ))}
+             </div>
+           )}
         </div>
       )}
     </div>

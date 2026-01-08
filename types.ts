@@ -61,6 +61,15 @@ export interface Assignment {
   createdAt: number;
 }
 
+export interface Feedback {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: number;
+  read: boolean;
+}
+
 export type AppView = 
   | 'login' 
   | 'admin-dashboard' 
