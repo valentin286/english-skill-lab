@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Button } from './components/Button';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { generateTheory, generateQuestions } from './services/geminiService';
+import { dbService } from './services/db'; // Import DB Service
 import { 
   BookOpen, 
   Brain, 
@@ -73,8 +74,9 @@ import {
   FolderInput
 } from 'lucide-react';
 
-// Initialize AI for Image Generation
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize AI for Image Generation with safe fallback
+const apiKey = (window as any).process?.env?.API_KEY || process.env.API_KEY;
+const ai = new GoogleGenAI({ apiKey });
 
 // --- GAMIFICATION HELPERS ---
 const calculateLevel = (xp: number) => Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -130,9 +132,6 @@ const getIcon = (iconName: string) => {
 const INITIAL_USERS: User[] = [
   { id: '1', name: 'Profesor Admin', username: 'admin', role: 'admin', xp: 500, league: 'Gold', impactScore: 100, streakDays: 10, lastActivityDate: '2023-10-27' },
   { id: '2', name: 'Estudiante Demo', username: 'student', role: 'student', xp: 120, league: 'Bronze', impactScore: 10, streakDays: 2, lastActivityDate: '2023-10-27' },
-  { id: '3', name: 'Alex Johnson', username: 'alexj', role: 'student', xp: 2150, league: 'Gold', impactScore: 45, streakDays: 15, lastActivityDate: '2023-10-27' },
-  { id: '4', name: 'Sarah Lee', username: 'sarah', role: 'student', xp: 800, league: 'Silver', impactScore: 20, streakDays: 5, lastActivityDate: '2023-10-26' },
-  { id: '5', name: 'Mike Brown', username: 'mike', role: 'student', xp: 3500, league: 'Platinum', impactScore: 120, streakDays: 30, lastActivityDate: '2023-10-27' },
 ];
 
 // Helper: Normalize Text for flexible matching
@@ -415,68 +414,38 @@ const ContentEditor = ({
 
 export const App = () => {
   // ... STATE ...
+  const [isAppLoading, setIsAppLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('app_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
-  });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('app_categories');
-    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
-  });
-
-  const [progressHistory, setProgressHistory] = useState<UserProgress[]>(() => {
-    const saved = localStorage.getItem('app_progress');
-    return saved ? JSON.parse(saved) : [];
-  });
   
-  const [studySessions, setStudySessions] = useState<StudySession[]>(() => {
-    const saved = localStorage.getItem('app_sessions');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [completedExercises, setCompletedExercises] = useState<Record<string, Record<string, number[]>>>(() => {
-    const saved = localStorage.getItem('app_completed_exercises');
-    return saved ? JSON.parse(saved) : {};
-  });
+  // Data States
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [progressHistory, setProgressHistory] = useState<UserProgress[]>([]);
+  const [studySessions, setStudySessions] = useState<StudySession[]>([]);
+  const [completedExercises, setCompletedExercises] = useState<Record<string, Record<string, number[]>>>({});
+  const [missions, setMissions] = useState<Mission[]>(INITIAL_MISSIONS);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
-  const [missions, setMissions] = useState<Mission[]>(() => {
-    const saved = localStorage.getItem('app_missions');
-    return saved ? JSON.parse(saved) : INITIAL_MISSIONS;
-  });
-
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>(() => {
-    const saved = localStorage.getItem('app_feedbacks');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Navigation & UI States
   const sessionStartTimeRef = useRef<number | null>(null);
-
   const [currentView, setCurrentView] = useState<AppView | 'practice-select'>('login');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-
   const [isTheoryPanelOpen, setIsTheoryPanelOpen] = useState(false);
   const [currentExerciseSet, setCurrentExerciseSet] = useState<number | null>(null);
-
   const [topicToEdit, setTopicToEdit] = useState<{catId: string, topic: Topic} | null>(null);
   const [editingCatMeta, setEditingCatMeta] = useState<{id: string, title: string, description: string} | null>(null);
-
   const [theoryContent, setTheoryContent] = useState<string>('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Comic State
   const [comicUrl, setComicUrl] = useState<string | null>(null);
   const [isGeneratingComic, setIsGeneratingComic] = useState(false);
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [showFeedback, setShowFeedback] = useState(false);
   const [examResult, setExamResult] = useState<ExamResult | null>(null);
-
   const [adminTab, setAdminTab] = useState<'users' | 'resources' | 'analytics' | 'feedback'>('users');
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('student');
@@ -484,10 +453,46 @@ export const App = () => {
   const [newTopicTitle, setNewTopicTitle] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [movingTopic, setMovingTopic] = useState<{topicId: string, fromCatId: string} | null>(null);
-
   const [analyticsStudentId, setAnalyticsStudentId] = useState<string | null>(null);
 
-  // ... EFFECTS ... 
+  // --- INITIAL DATA LOAD FROM FIREBASE ---
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        const loadedUsers = await dbService.getUsers(INITIAL_USERS);
+        const loadedCategories = await dbService.getCategories(INITIAL_CATEGORIES);
+        const loadedProgress = await dbService.getProgress([]);
+        const loadedSessions = await dbService.getSessions([]);
+        const loadedCompleted = await dbService.getCompletedExercises({});
+        const loadedMissions = await dbService.getMissions(INITIAL_MISSIONS);
+        const loadedFeedbacks = await dbService.getFeedbacks([]);
+
+        setUsers(loadedUsers);
+        setCategories(loadedCategories);
+        setProgressHistory(loadedProgress);
+        setStudySessions(loadedSessions);
+        setCompletedExercises(loadedCompleted);
+        setMissions(loadedMissions);
+        setFeedbacks(loadedFeedbacks);
+      } catch (error) {
+        console.error("Failed to load initial data", error);
+      } finally {
+        setIsAppLoading(false);
+      }
+    };
+    initApp();
+  }, []);
+
+  // --- SAVE DATA TO FIREBASE ON CHANGE ---
+  useEffect(() => { if(!isAppLoading) dbService.saveUsers(users); }, [users, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveCategories(categories); }, [categories, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveProgress(progressHistory); }, [progressHistory, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveSessions(studySessions); }, [studySessions, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveCompletedExercises(completedExercises); }, [completedExercises, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveMissions(missions); }, [missions, isAppLoading]);
+  useEffect(() => { if(!isAppLoading) dbService.saveFeedbacks(feedbacks); }, [feedbacks, isAppLoading]);
+
+  // Theme effect
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -497,14 +502,6 @@ export const App = () => {
       localStorage.setItem('theme', 'light');
     }
   }, [darkMode]);
-
-  useEffect(() => { localStorage.setItem('app_users', JSON.stringify(users)); }, [users]);
-  useEffect(() => { localStorage.setItem('app_categories', JSON.stringify(categories)); }, [categories]);
-  useEffect(() => { localStorage.setItem('app_progress', JSON.stringify(progressHistory)); }, [progressHistory]);
-  useEffect(() => { localStorage.setItem('app_sessions', JSON.stringify(studySessions)); }, [studySessions]);
-  useEffect(() => { localStorage.setItem('app_completed_exercises', JSON.stringify(completedExercises)); }, [completedExercises]);
-  useEffect(() => { localStorage.setItem('app_missions', JSON.stringify(missions)); }, [missions]);
-  useEffect(() => { localStorage.setItem('app_feedbacks', JSON.stringify(feedbacks)); }, [feedbacks]);
 
   const startSessionTracking = () => { sessionStartTimeRef.current = Date.now(); };
 
@@ -677,64 +674,103 @@ export const App = () => {
   };
 
   // ... (Content Loaders & Gameplay Logic)
-  const prepareContent = (topic: Topic) => {
+  const prepareContent = async (topic: Topic) => {
     if (topic.manualTheory && topic.manualTheory.trim().length > 0) {
       setTheoryContent(topic.manualTheory);
     } else {
-      setTheoryContent("# Próximamente\n\nEl profesor aún no ha añadido el contenido teórico para este tema.");
+      // AI Fallback for Theory
+      setTheoryContent("# Cargando teoría...\n\nPor favor espera mientras la IA genera el contenido.");
+      setIsLoading(true);
+      const generatedContent = await generateTheory(topic.title);
+      setTheoryContent(generatedContent);
+      setIsLoading(false);
     }
   };
 
-  const startStudy = (topic: Topic) => {
+  const startStudy = async (topic: Topic) => {
     setSelectedTopic(topic);
     setCurrentView('study');
-    startSessionTracking();
-    prepareContent(topic);
     setComicUrl(null);
+    startSessionTracking();
+    await prepareContent(topic);
   };
 
   const preparePractice = (topic: Topic) => {
-    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
-      alert("No hay ejercicios disponibles para este tema.");
-      return;
-    }
+    // Allows selecting practice even without manual questions (to use AI)
     setSelectedTopic(topic);
     setCurrentView('practice-select');
   };
 
-  const startPractice = (topic: Topic, exerciseIndex?: number) => {
-    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
-      alert("No hay ejercicios disponibles para este tema.");
-      return;
-    }
+  const startPractice = async (topic: Topic, exerciseIndex?: number) => {
     setSelectedTopic(topic);
     resetSession();
-    prepareContent(topic);
     setCurrentView('practice');
     startSessionTracking();
 
     let qs: Question[] = [];
-    if (exerciseIndex !== undefined) {
-      setCurrentExerciseSet(exerciseIndex);
-      const start = exerciseIndex * 10;
-      qs = topic.manualQuestions.slice(start, start + 10);
+    
+    // Check if we have manual questions
+    if (topic.manualQuestions && topic.manualQuestions.length > 0) {
+        if (exerciseIndex !== undefined) {
+          setCurrentExerciseSet(exerciseIndex);
+          const start = exerciseIndex * 10;
+          qs = topic.manualQuestions.slice(start, start + 10);
+        } else {
+          qs = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+        }
+        setQuestions(qs);
+        // Load theory for cheatsheet without blocking
+        prepareContent(topic);
     } else {
-      qs = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+        // AI GENERATION MODE
+        setIsLoading(true);
+        // Load theory in background
+        if (!topic.manualTheory) {
+             generateTheory(topic.title).then(setTheoryContent);
+        } else {
+             setTheoryContent(topic.manualTheory);
+        }
+        
+        try {
+            const aiQuestions = await generateQuestions(topic.title, 10, 'medium');
+            if (aiQuestions && aiQuestions.length > 0) {
+                setQuestions(aiQuestions);
+            } else {
+                alert("No se pudieron generar preguntas. Inténtalo de nuevo.");
+                setCurrentView('practice-select');
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error conectando con la IA.");
+            setCurrentView('practice-select');
+        } finally {
+            setIsLoading(false);
+        }
     }
-    setQuestions(qs);
   };
 
-  const startExam = (topic: Topic) => {
-    if (!topic.manualQuestions || topic.manualQuestions.length === 0) {
-      alert("No hay examen disponible para este tema.");
-      return;
-    }
+  const startExam = async (topic: Topic) => {
     setSelectedTopic(topic);
     resetSession();
     setCurrentView('exam');
     startSessionTracking();
-    const shuffled = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 20);
-    setQuestions(shuffled);
+    
+    if (topic.manualQuestions && topic.manualQuestions.length > 0) {
+        const shuffled = [...topic.manualQuestions].sort(() => 0.5 - Math.random()).slice(0, 20);
+        setQuestions(shuffled);
+    } else {
+        // AI Exam Generation
+        setIsLoading(true);
+        try {
+            const aiQuestions = await generateQuestions(topic.title, 20, 'hard');
+            setQuestions(aiQuestions);
+        } catch (e) {
+            alert("Error generando examen.");
+            setCurrentView('topic-detail');
+        } finally {
+            setIsLoading(false);
+        }
+    }
   };
 
   const handleAnswer = (answer: string) => {
@@ -862,6 +898,14 @@ export const App = () => {
   };
 
   // --- RENDERERS ---
+
+  if (isAppLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <LoadingSpinner message="Conectando con la base de datos..." />
+      </div>
+    );
+  }
 
   const renderLeaderboard = () => {
     const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
